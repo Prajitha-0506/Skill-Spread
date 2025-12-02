@@ -1,0 +1,163 @@
+/* --- Import Google Font --- */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+/* --- Clean Background --- */
+body {
+    background-color: #f0f2f6; /* Clean light background */
+    font-family: 'Poppins', sans-serif;
+}
+
+/* --- Main content container (transparent) --- */
+div[data-testid="stAppViewContainer"] > .main {
+    background: transparent;
+    padding: 2rem;
+    margin: 1rem;
+    border: none;
+    box-shadow: none;
+}
+
+/* --- Sidebar Styling (Only shows after analysis) --- */
+div[data-testid="stSidebar"] {
+    background: #ffffff; /* Solid white sidebar */
+    border-right: 1px solid #e0e0e0;
+}
+
+/* --- Heading Fix --- */
+h1, h2, h3, h4, h5, h6 {
+    color: #E0E0E0 !important; /* ⬅️ CRITICAL CHANGE: Light grey for all headings (was #002244) */
+}
+/* --- End of Heading Fix --- */
+
+
+/* --- Widget Styling (FIXED for Selectbox) --- */
+/* Labels for all widgets */
+label[data-testid="stWidgetLabel"],
+div[data-testid="stSelectbox"] label {
+    color: #E0E0E0 !important; /* Vibrant Blue label */
+    font-weight: 500 !important;
+}
+
+/* Text inside "Your Name" box */
+div[data-testid="stTextInput"] input {
+    color: #E0E0E0 !important;
+}
+/* Text inside "Your Skills" box */
+div[data-testid="stTextArea"] textarea {
+    color: #E0E0E0 !important;
+}
+
+/* --- This is the fix for the selectbox text --- */
+div[data-testid="stSelectbox"] div[data-baseweb="select"] {
+    color: #E0E0E0 !important;
+}
+div[data-testid="stSelectbox"] div[data-baseweb="select"] > div > div {
+    color: #E0E0E0 !important; 
+}
+div[data-testid="stSelectbox"] div[data-baseweb="select"] div[class*="placeholder"] {
+     color: #E0E0E0 !important; 
+}
+/* --- End of Widget Styling Fix --- */
+
+
+/* --- Skill Chip Styling --- */
+.skill-chip-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+.skill-chip {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 16px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+.skill-chip-success {
+    background-color: #e6f7f0;
+    color: #0d683f;
+    border: 1px solid #b7e4cf;
+}
+.skill-chip-error {
+    background-color: #fdecea;
+    color: #a91e2c;
+    border: 1px solid #f8c9c7;
+}
+.skill-chip-info {
+    background-color: #fff3e0;
+    color: #e65100;
+    border: 1px solid #ffe0b2;
+}
+
+/* --- Job Card Styling --- */
+.job-card-custom {
+    border: 1px solid #e0e0e0; /* Light grey border */
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    background: #ffffff; /* Solid white card */
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+.job-card-custom:hover {
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
+    transform: translateY(-5px);
+    border-color: #2a7fff;
+}
+.job-title {
+    margin: 0 0 5px 0;
+    color: #002244;
+}
+.job-company {
+    margin: 3px 0;
+    color: #5A6D7C;
+    font-size: 1rem;
+}
+.job-description {
+    margin: 10px 0;
+    color: #6c757d;
+    font-size: 0.95rem;
+}
+.job-skills {
+    margin: 10px 0;
+}
+.skill-tag-match {
+    background-color: #e7f3ff;
+    color: #0063f7;
+    padding: 4px 10px;
+    border-radius: 16px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin: 2px;
+}
+.skill-tag-neutral {
+    background-color: #f0f0f0;
+    color: #555;
+    padding: 4px 10px;
+    border-radius: 16px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin: 2px;
+}
+.job-link {
+    display: inline-block;
+    margin-top: 15px;
+    background-color: #2a7fff;
+    color: white !important;
+    padding: 10px 18px;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+.job-link:hover {
+    background-color: #0056b3;
+    color: white !important;
+}
+
+/* --- Chat Styling --- */
+[data-testid="stChatMessage"] {
+    border-radius: 12px;
+    padding: 12px;
+    background-color: #ffffff !important;
+    border: 1px solid #e0e0e0;
+}

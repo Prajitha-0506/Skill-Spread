@@ -1,0 +1,7 @@
+[theme]
+base="dark"
+primaryColor="#FF7F00"           # Vibrant Orange (Accent, Buttons)
+backgroundColor="#141E30"        # Deep Midnight Blue (Page Background)
+secondaryBackgroundColor="#243B55" # Lighter Blue (Containers, Sidebar)
+textColor="#E0E0E0"              # Your light grey text (Kept for high visibility)
+font="Inter"
