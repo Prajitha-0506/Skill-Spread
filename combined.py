@@ -272,7 +272,19 @@ def create_prompt(skills, job_description):
 
 def generate_response(prompt):
     try:
-        genai.configure(api_key=st.secrets["gemini"]["api_key"])
+        # Check if key is available in secrets object
+        if "gemini" not in st.secrets or "api_key" not in st.secrets["gemini"]:
+            st.error("Gemini API Key missing from configuration. Cannot connect to AI model.")
+            return None  # Return None if key is missing
+
+        gemini_api_key = st.secrets["gemini"]["api_key"]
+
+        # Check if the key value itself is valid (e.g., empty string)
+        if not gemini_api_key:
+            st.error("Gemini API Key is empty. Please check the value in your Render environment.")
+            return None
+
+        genai.configure(api_key=gemini_api_key)
         model = genai.GenerativeModel('models/gemini-pro-latest')
 
         # CRITICAL FIX: Use streaming to reduce perceived latency
@@ -282,6 +294,7 @@ def generate_response(prompt):
         return response_stream
 
     except Exception as e:
+        # Display the actual error returned by the API (like 400 API key expired)
         st.error(f"An error occurred with the AI model: {e}")
         return None
 
