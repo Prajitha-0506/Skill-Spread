@@ -21,8 +21,6 @@ st.set_page_config(
     # REMOVED: theme="light" - this was causing the error
 )
 
-st.set_option('deprecation.showfileuploaderEncoding', False)
-
 
 # --- CSS is embedded directly ---
 def load_css():
