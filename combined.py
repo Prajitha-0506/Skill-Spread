@@ -25,10 +25,7 @@ st.set_page_config(
 # --- CSS is embedded directly ---
 def load_css():
     css_styles = """
-<<<<<<< HEAD
-=======
-    
->>>>>>> 2b032094f3ba9344419c5996b9fadd245cf2afb6
+
     /* --- Import Google Font --- */
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
@@ -38,24 +35,16 @@ def load_css():
         border-right: 1px solid #e0e0e0;
     }
 
-<<<<<<< HEAD
-    /* --- Heading Fix --- */
-    h1, h2, h3, h4, h5, h6 {
-        color: #E0E0E0 !important; /* FIXED for Dark Theme */
-    }
-    /* --- End of Heading Fix --- */
-=======
     /* --- Heading Fix (Make sure this rule is strong) --- */
     h1, h2, h3, h4, h5, h6 {
         color: #E0E0E0 !important; 
     }
-    
+
     /* ADD/ENSURE THIS: Target h3 specifically in the sidebar */
     div[data-testid="stSidebar"] h3 {
         font-size: 1.5rem !important; /* Force the size on the header */
         font-weight: 600 !important;
     }
->>>>>>> 2b032094f3ba9344419c5996b9fadd245cf2afb6
 
 
     /* --- Widget Styling (FIXED for DARK text) --- */
@@ -241,14 +230,11 @@ def load_css():
         background-color: var(--background-color) !important;
     }
     /* --- End ULTIMATE FLICKER FIX --- */
-<<<<<<< HEAD
-=======
-    
+
     /* Final successful fix concept: High specificity and deep nesting */
     div[data-testid="stSidebar"] div[data-testid*="stBlock"] > div > div > div > p {
         font-size: 1.25rem !important; 
     }
->>>>>>> 2b032094f3ba9344419c5996b9fadd245cf2afb6
 
     """
     st.markdown(f"<style>{css_styles}</style>", unsafe_allow_html=True)
@@ -491,16 +477,6 @@ if st.session_state.get("analysis_done", False):
 
     st.sidebar.header(f"Welcome, {st.session_state.name or 'User'}!")
 
-<<<<<<< HEAD
-    current_page = st.session_state.get("page", "📊 Analysis Report")
-
-    selected_page = st.sidebar.radio(
-        "Navigation",
-        ["📊 Analysis Report", "🔍 Find Jobs", "📝 Resume Builder", "🤖 AI Career Chat"],
-        index=["📊 Analysis Report", "🔍 Find Jobs", "📝 Resume Builder", "🤖 AI Career Chat"].index(current_page)
-    )
-    st.session_state["page"] = selected_page  # CRITICAL FIX: Store page in session state
-=======
     # Define the list of options clearly
     NAV_OPTIONS = ["📊 Analysis Report", "🔍 Find Jobs", "📝 Resume Builder", "🤖 AI Career Chat"]
     DEFAULT_PAGE = NAV_OPTIONS[0]  # Use the first element as the default
@@ -517,7 +493,6 @@ if st.session_state.get("analysis_done", False):
         index=NAV_OPTIONS.index(current_page)
     )
     st.session_state["page"] = selected_page
->>>>>>> 2b032094f3ba9344419c5996b9fadd245cf2afb6
 
     st.sidebar.divider()
     if st.sidebar.button("⬅️ Start New Analysis"):
