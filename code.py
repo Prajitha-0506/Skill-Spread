@@ -1,18 +1,20 @@
 import streamlit as st
 import requests
 
+
 def fetch_jobs(skill, min_experience_years=0, location="India"):
-
-    # CRITICAL CHECK: Use session state access directly
-    if "api" not in st.secrets or "adzuna_app_id" not in st.secrets["api"]:
-        st.error("Adzuna API keys missing from configuration. Cannot fetch jobs.")
-        return []
-
+    """
+    Fetches job listings from the Adzuna API, filtering by skill and minimum experience.
+    The min_experience_years parameter uses a salary benchmark proxy.
+    """
     app_id = st.secrets["api"]["adzuna_app_id"]
     app_key = st.secrets["api"]["adzuna_app_key"]
 
     if not app_id or not app_key:
-        st.error("Adzuna API Key Missing: App ID or App Key value is empty in Render environment.")
+        # Check for missing credentials first
+        st.error("API Key Missing: Adzuna App ID or App Key not found in Streamlit secrets.")
+        return []
+    if not skill.strip():
         return []
 
     # --- TIERED SALARY BENCHMARK (in INR) ---

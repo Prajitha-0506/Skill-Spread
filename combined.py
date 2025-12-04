@@ -25,7 +25,6 @@ st.set_page_config(
 # --- CSS is embedded directly ---
 def load_css():
     css_styles = """
-    
     /* --- Import Google Font --- */
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
@@ -35,16 +34,11 @@ def load_css():
         border-right: 1px solid #e0e0e0;
     }
 
-    /* --- Heading Fix (Make sure this rule is strong) --- */
+    /* --- Heading Fix --- */
     h1, h2, h3, h4, h5, h6 {
-        color: #E0E0E0 !important; 
+        color: #E0E0E0 !important; /* FIXED for Dark Theme */
     }
-    
-    /* ADD/ENSURE THIS: Target h3 specifically in the sidebar */
-    div[data-testid="stSidebar"] h3 {
-        font-size: 1.5rem !important; /* Force the size on the header */
-        font-weight: 600 !important;
-    }
+    /* --- End of Heading Fix --- */
 
 
     /* --- Widget Styling (FIXED for DARK text) --- */
@@ -230,11 +224,6 @@ def load_css():
         background-color: var(--background-color) !important;
     }
     /* --- End ULTIMATE FLICKER FIX --- */
-    
-    /* Final successful fix concept: High specificity and deep nesting */
-    div[data-testid="stSidebar"] div[data-testid*="stBlock"] > div > div > div > p {
-        font-size: 1.25rem !important; 
-    }
 
     """
     st.markdown(f"<style>{css_styles}</style>", unsafe_allow_html=True)
@@ -272,19 +261,7 @@ def create_prompt(skills, job_description):
 
 def generate_response(prompt):
     try:
-        # Check if key is available in secrets object
-        if "gemini" not in st.secrets or "api_key" not in st.secrets["gemini"]:
-            st.error("Gemini API Key missing from configuration. Cannot connect to AI model.")
-            return None  # Return None if key is missing
-
-        gemini_api_key = st.secrets["gemini"]["api_key"]
-
-        # Check if the key value itself is valid (e.g., empty string)
-        if not gemini_api_key:
-            st.error("Gemini API Key is empty. Please check the value in your Render environment.")
-            return None
-
-        genai.configure(api_key=gemini_api_key)
+        genai.configure(api_key=st.secrets["gemini"]["api_key"])
         model = genai.GenerativeModel('models/gemini-pro-latest')
 
         # CRITICAL FIX: Use streaming to reduce perceived latency
@@ -294,7 +271,6 @@ def generate_response(prompt):
         return response_stream
 
     except Exception as e:
-        # Display the actual error returned by the API (like 400 API key expired)
         st.error(f"An error occurred with the AI model: {e}")
         return None
 
@@ -490,22 +466,14 @@ if st.session_state.get("analysis_done", False):
 
     st.sidebar.header(f"Welcome, {st.session_state.name or 'User'}!")
 
-    # Define the list of options clearly
-    NAV_OPTIONS = ["📊 Analysis Report", "🔍 Find Jobs", "📝 Resume Builder", "🤖 AI Career Chat"]
-    DEFAULT_PAGE = NAV_OPTIONS[0]  # Use the first element as the default
-
-    current_page = st.session_state.get("page", DEFAULT_PAGE)
-
-    # If the stored page is somehow invalid, reset it to the default
-    if current_page not in NAV_OPTIONS:
-        current_page = DEFAULT_PAGE
+    current_page = st.session_state.get("page", "📊 Analysis Report")
 
     selected_page = st.sidebar.radio(
         "Navigation",
-        NAV_OPTIONS,
-        index=NAV_OPTIONS.index(current_page)
+        ["📊 Analysis Report", "🔍 Find Jobs", "📝 Resume Builder", "🤖 AI Career Chat"],
+        index=["📊 Analysis Report", "🔍 Find Jobs", "📝 Resume Builder", "🤖 AI Career Chat"].index(current_page)
     )
-    st.session_state["page"] = selected_page
+    st.session_state["page"] = selected_page  # CRITICAL FIX: Store page in session state
 
     st.sidebar.divider()
     if st.sidebar.button("⬅️ Start New Analysis"):

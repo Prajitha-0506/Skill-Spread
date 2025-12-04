@@ -1,3 +1,4 @@
+--build-option --global-option="--install-scripts=/usr/local/bin"
 streamlit
 pandas
 joblib
