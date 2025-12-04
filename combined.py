@@ -12,6 +12,8 @@ import google.generativeai as genai
 import random
 import re
 import plotly.graph_objects as go
+import plotly.graph_objects as go
+from secrets_helper import load_secrets
 
 # --- Page and State Setup ---
 st.set_page_config(
