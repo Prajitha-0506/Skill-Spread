@@ -291,20 +291,67 @@ def generate_response(prompt):
 
 
 # Helper function to display skills as styled chips
-def display_skill_chips(skills, skill_type):
-    if not skills:
+def display_jobs(jobs, user_skills):
+    if not user_skills:
+        st.info("⚠️ No skills provided to match against job descriptions.")
         return
 
-    type_map = {
-        "success": "Skills you have:",
-        "error": "Core skills to learn:",
-        "info": "Optional skills to explore:"
-    }
+    for job in jobs:
+        raw_text = (job.get("title", "") + " " + job.get("description", ""))
 
-    st.markdown(f"**{type_map.get(skill_type, 'Skills:')}**")
+        # --- Skill Matching Logic ---
+        text_to_search = clean_text(raw_text)
+        matched_skills_in_job = list(dict.fromkeys([
+            original_skill for original_skill in user_skills
+            if enhanced_normalize_skill(original_skill) in text_to_search
+        ]))
+        # --- End Skill Matching Logic ---
 
-    chips_html = "".join([f'<span class="skill-chip skill-chip-{skill_type}">{skill}</span>' for skill in skills])
-    st.markdown(f'<div class="skill-chip-container">{chips_html}</div>', unsafe_allow_html=True)
+        if not matched_skills_in_job:
+            skills_html = '<span class="skill-tag-neutral">No direct skill matches found</span>'
+        else:
+            skills_html = "".join([f'<span class="skill-tag-match">{skill}</span>' for skill in matched_skills_in_job])
+
+        # --- URL Logic ---
+        # 1. Check for LinkedIn URL (The preferred "Apply Now" link)
+        linkedin_url = job.get("linkedin_url")
+
+        # 2. Get the original Adzuna link (The "View Posting" link)
+        raw_redirect_url = job.get("redirect_url", "#")
+        final_redirect_url = "https://" + raw_redirect_url if raw_redirect_url and not raw_redirect_url.startswith(
+            ("http://", "https://")) else raw_redirect_url
+
+        # Decide which link to use for the primary button
+        primary_link = linkedin_url if linkedin_url else final_redirect_url
+
+        # Determine the button text based on link availability
+        primary_button_text = "✨ Apply Now (LinkedIn)" if linkedin_url else "🔗 View Full Posting"
+
+        # --- End URL Logic ---
+
+        # Using st.markdown to create a custom card
+        st.markdown(
+            f"""
+            <div class="job-card-custom">
+                <h4 class="job-title">{job.get("title", "No Title")}</h4>
+                <p class="job-company">
+                    <b>{job.get("company", {}).get("display_name", "Unknown Company")}</b> | 📍 {job.get("location", {}).get("display_name", "Unknown Location")}
+                </p>
+                <p class="job-description">{job.get("description", "No description available")[:220]}...</p>
+                <div class="job-skills"><b>Matching skills:</b> {skills_html}</div>
+
+                <a href="{primary_link}" target="_blank" class="job-link">
+                    {primary_button_text}
+                </a>
+
+                {'<a href="' + final_redirect_url + '" target="_blank" class="job-link" style="background-color: #555; margin-left: 10px;">View Original Posting</a>' if linkedin_url else ''}
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+
+# Note: The CSS class .job-link is defined in your load_css function and handles the blue styling.
 
 
 def fuzzy_match(skill, skill_list, threshold=65):
