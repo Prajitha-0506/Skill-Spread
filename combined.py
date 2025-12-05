@@ -355,9 +355,15 @@ def display_jobs(jobs, user_skills):
         else:
             skills_html = " ".join([f'<span class="skill-tag-match">{skill}</span>' for skill in matched_skills_in_job])
 
-        # --- Data Extraction ---
-        raw_redirect_url = job.get("redirect_url", "#")
-        # Ensure URL is clean for external redirect
+        original_source_url = job.get("adref", job.get("adref_url", None))
+
+        # Use the original source if available, otherwise fall back to the Adzuna details page.
+        if original_source_url:
+            raw_redirect_url = original_source_url
+        else:
+            raw_redirect_url = job.get("redirect_url", "#")
+
+        # Ensure URL is properly formatted
         final_url = "https://" + raw_redirect_url if raw_redirect_url and not raw_redirect_url.startswith(
             ("http://", "https://")) else raw_redirect_url
 
