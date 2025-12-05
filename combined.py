@@ -380,7 +380,7 @@ def display_jobs(jobs, user_skills):
         </a>
     </div>
 </div>
-<div style="margin-bottom: 20px;"></div> {/ * Adds separation margin * /}
+<div style="margin-bottom: 20px;"></div>
 """
 
         # Render in ONE call with no risk of NameErrors from extraneous code
