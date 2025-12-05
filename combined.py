@@ -349,49 +349,42 @@ def display_jobs(jobs, user_skills):
             original_skill for original_skill in user_skills
             if enhanced_normalize_skill(original_skill) in text_to_search
         ]))
-        # --- End Skill Matching Logic ---
 
         if not matched_skills_in_job:
             skills_html = '<span class="skill-tag-neutral">No direct skill matches found</span>'
         else:
-            skills_html = "".join([f'<span class="skill-tag-match">{skill}</span>' for skill in matched_skills_in_job])
+            skills_html = " ".join([f'<span class="skill-tag-match">{skill}</span>' for skill in matched_skills_in_job])
 
-        # --- FINAL Simplified URL Logic ---
+        # --- Data Extraction ---
         raw_redirect_url = job.get("redirect_url", "#")
+        # Ensure URL is clean for external redirect
         final_url = "https://" + raw_redirect_url if raw_redirect_url and not raw_redirect_url.startswith(
             ("http://", "https://")) else raw_redirect_url
-        # --- End FINAL Simplified URL Logic ---
 
-        # *** CRITICAL FIX: Use st.write for maximum HTML rendering reliability ***
-        # We split the rendering into two parts for maximum safety against parsing errors.
+        company = job.get("company", {}).get("display_name", "Unknown Company")
+        location = job.get("location", {}).get("display_name", "Remote/Unknown")
+        title = job.get("title", "No Title")
+        description = job.get("description", "No description available")[:220] + "..."
+        # --- End Data Extraction ---
 
-        # 1. Render the job card details using st.markdown
-        st.markdown(
-            f"""
+        # *** CRITICAL FIX: The HTML is flush left to force rendering ***
+        job_card_html = f"""
 <div class="job-card-custom">
-    <h4 class="job-title">{job.get("title", "No Title")}</h4>
-    <p class="job-company">
-        <b>{job.get("company", {}).get("display_name", "Unknown Company")}</b> | 📍 {job.get("location", {}).get("display_name", "Unknown Location")}
-    </p>
-    <p class="job-description">{job.get("description", "No description available")[:220]}...</p>
+    <h4 class="job-title">{title}</h4>
+    <p class="job-company"><b>{company}</b> | 📍 {location}</p>
+    <p class="job-description">{description}</p>
     <div class="job-skills"><b>Matching skills:</b> {skills_html}</div>
-""",
-            unsafe_allow_html=True
-        )
-
-        # 2. Render the button using st.write in a separate block to guarantee HTML execution
-        st.write(
-            f"""
     <div style="margin-top: 15px;">
-        <a href="{final_url}" target="_blank" class="btn-apply-now"> 
+        <a href="{final_url}" target="_blank" class="btn-apply-now">
             🚀 Apply Now
         </a>
     </div>
-    </div> {/ * Closes job-card-custom from the markdown above * /}
-    <div style="margin-bottom: 20px;"></div> {/ * Adds the margin back that was removed by splitting the card * /}
-    """,
-            unsafe_allow_html=True
-        )
+</div>
+<div style="margin-bottom: 20px;"></div> {/ * Adds separation margin * /}
+"""
+
+        # Render in ONE call with no risk of NameErrors from extraneous code
+        st.markdown(job_card_html, unsafe_allow_html=True)
 
 # --- Data & Model Loading ---
 @st.cache_data
