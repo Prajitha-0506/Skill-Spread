@@ -619,10 +619,12 @@ if st.session_state.get("analysis_done", False):
                 st.caption("Enter valid skills for a role prediction.")
         with inner_tab2:
             if st.session_state.user_skills_cleaned:
-                query_skills = ", ".join(st.session_state.original_skills)
-                st.info(f"Showing jobs for skills: **{query_skills}**")
+                all_skills = st.session_state.original_skills
+                query_skills = " ".join(all_skills)
+                # --- END FIX ---
+
+                st.info(f"Showing jobs for all user-entered skills: **{query_skills}**")
                 with st.spinner(f"Fetching jobs for your skills..."):
-                    # Original call without experience argument:
                     jobs = fetch_jobs(query_skills)
                     display_jobs(jobs[:5], st.session_state.get("original_skills", []))
             else:
