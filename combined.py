@@ -242,8 +242,54 @@ def load_css():
     st.markdown(f"<style>{css_styles}</style>", unsafe_allow_html=True)
 
 
-# Load the embedded CSS
-load_css()
+# --- Helper, GenAI, and Skill Processing Functions ---
+def get_base64_of_bin_file(bin_file):
+    try:
+        with open(bin_file, 'rb') as f:
+            data = f.read()
+        return base64.b64encode(data).decode()
+    except FileNotFoundError:
+        return None
+
+
+def create_prompt(skills, job_description):
+    # Modified prompt for conciseness
+    return f"""As an expert career coach, based on these skills: {skills} and this job description: {job_description}, write 3-5 powerful, highly concise resume bullet points starting with action verbs. Focus on matching the user's skills to the job requirements without inventing skills. Format them as a bulleted list."""
+
+
+def generate_response(prompt):
+    try:
+        # FIX: Access key via the "api" section, not a non-existent "gemini" section.
+        genai.configure(api_key=st.secrets["api"]["gemini_api_key"])
+        model = genai.GenerativeModel('models/gemini-pro-latest')
+
+        # CRITICAL FIX: Use streaming to reduce perceived latency
+        response_stream = model.generate_content(prompt, stream=True)
+
+        # Return the stream object
+        return response_stream
+
+    except Exception as e:
+        # This catch is good, but the key error makes the traceback misleading
+        st.error(f"An error occurred with the AI model: {e}")
+        return None
+
+# Helper function to display skills as styled chips
+def display_skill_chips(skills, skill_type):
+    if not skills:
+        return
+
+    type_map = {
+        "success": "Skills you have:",
+        "error": "Core skills to learn:",
+        "info": "Optional skills to explore:"
+    }
+
+    st.markdown(f"**{type_map.get(skill_type, 'Skills:')}**")
+
+    chips_html = "".join([f'<span class="skill-chip skill-chip-{skill_type}">{skill}</span>' for skill in skills])
+    st.markdown(f'<div class="skill-chip-container">{chips_html}</div>', unsafe_allow_html=True)
+
 
 def fuzzy_match(skill, skill_list, threshold=65):
     if not skill or not skill_list:
@@ -285,37 +331,7 @@ if "chat_messages" not in st.session_state:
     ]
 
 
-# --- Helper, GenAI, and Skill Processing Functions ---
-def get_base64_of_bin_file(bin_file):
-    try:
-        with open(bin_file, 'rb') as f:
-            data = f.read()
-        return base64.b64encode(data).decode()
-    except FileNotFoundError:
-        return None
 
-
-def create_prompt(skills, job_description):
-    # Modified prompt for conciseness
-    return f"""As an expert career coach, based on these skills: {skills} and this job description: {job_description}, write 3-5 powerful, highly concise resume bullet points starting with action verbs. Focus on matching the user's skills to the job requirements without inventing skills. Format them as a bulleted list."""
-
-
-def generate_response(prompt):
-    try:
-        # FIX: Access key via the "api" section, not a non-existent "gemini" section.
-        genai.configure(api_key=st.secrets["api"]["gemini_api_key"])
-        model = genai.GenerativeModel('models/gemini-pro-latest')
-
-        # CRITICAL FIX: Use streaming to reduce perceived latency
-        response_stream = model.generate_content(prompt, stream=True)
-
-        # Return the stream object
-        return response_stream
-
-    except Exception as e:
-        # This catch is good, but the key error makes the traceback misleading
-        st.error(f"An error occurred with the AI model: {e}")
-        return None
 
 
 # Helper function to display skills as styled chips
@@ -448,6 +464,9 @@ def load_models():
     model = joblib.load("job_role_predictor.pkl")
     vectorizer = joblib.load("skill_vectorizer.pkl")
     return model, vectorizer, model.classes_
+
+
+load_css()
 
 
 data, all_skills, roles_from_data = load_data()
