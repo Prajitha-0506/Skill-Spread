@@ -376,11 +376,11 @@ def display_jobs(jobs, user_skills):
                         <p class="job-description">{job.get("description", "No description available")[:220]}...</p>
                         <div class="job-skills"><b>Matching skills:</b> {skills_html}</div>
 
-                        <div style="margin-top: 15px;"> {/ * < --- ADDED CONTAINER DIV * /}
+                        <div style="margin-top: 15px;">
                             <a href="{final_url}" target="_blank" class="btn-apply-now"> 
                                 🚀 Apply Now
                             </a>
-                        </div> {/ * < --- END ADDED CONTAINER DIV * /}
+                        </div>
                     </div>
                     """,
             unsafe_allow_html=True
