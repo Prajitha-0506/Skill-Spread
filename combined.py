@@ -343,7 +343,7 @@ def display_jobs(jobs, user_skills):
     for job in jobs:
         raw_text = (job.get("title", "") + " " + job.get("description", ""))
 
-        # --- Skill Matching Logic ---
+        # --- Skill Matching Logic (Keep as is) ---
         text_to_search = clean_text(raw_text)
         matched_skills_in_job = list(dict.fromkeys([
             original_skill for original_skill in user_skills
@@ -355,33 +355,31 @@ def display_jobs(jobs, user_skills):
         else:
             skills_html = " ".join([f'<span class="skill-tag-match">{skill}</span>' for skill in matched_skills_in_job])
 
-            # 1. Check for the best-case, direct-source link ('adref' or 'adref_url')
-            original_source_url = job.get("adref", job.get("adref_url", None))
-
-            # 2. Determine which URL to use
-            # Start with the safe default (Adzuna tracking link)
-            url_to_clean = job.get("redirect_url", "#")
-
-            # CRITICAL CHECK: Only use the original source if it is a string AND long enough to be a valid URL (e.g., more than 10 characters)
-            if original_source_url and isinstance(original_source_url, str) and len(original_source_url) > 10:
-                url_to_clean = original_source_url
-
-            # 3. Perform the necessary protocol cleanup
-            if url_to_clean.startswith(("http://", "https://")):
-                final_url = url_to_clean
-            elif url_to_clean == "#":
-                final_url = "#"
-            else:
-                # If it's just a domain or path, assume HTTPS for security
-                final_url = "https://" + url_to_clean
-
+        # --- Data Extraction (Keep as is) ---
         company = job.get("company", {}).get("display_name", "Unknown Company")
         location = job.get("location", {}).get("display_name", "Remote/Unknown")
         title = job.get("title", "No Title")
         description = job.get("description", "No description available")[:220] + "..."
         # --- End Data Extraction ---
 
-        # *** CRITICAL FIX: The HTML is flush left to force rendering ***
+        # --- The FINAL Stable URL Logic ---
+
+        # We prioritize the Adzuna redirect URL as it is the only guaranteed working link.
+        # The 'adref' field is too unreliable.
+        raw_url_to_use = job.get("redirect_url", "#")
+        button_text = "🔗 Apply on Adzuna"
+
+        # Final URL cleanup for the tracking link
+        if raw_url_to_use.startswith(("http://", "https://")):
+            final_url = raw_url_to_use
+        elif raw_url_to_use == "#":
+            final_url = "#"
+        else:
+            final_url = "https://" + raw_url_to_use
+
+        # --- End FINAL Stable URL Logic ---
+
+        # The HTML block is flush left (Guaranteed Button Display)
         job_card_html = f"""
 <div class="job-card-custom">
     <h4 class="job-title">{title}</h4>
@@ -390,14 +388,12 @@ def display_jobs(jobs, user_skills):
     <div class="job-skills"><b>Matching skills:</b> {skills_html}</div>
     <div style="margin-top: 15px;">
         <a href="{final_url}" target="_blank" class="btn-apply-now">
-            🚀 Apply Now
+            {button_text}
         </a>
     </div>
 </div>
 <div style="margin-bottom: 20px;"></div>
 """
-
-        # Render in ONE call with no risk of NameErrors from extraneous code
         st.markdown(job_card_html, unsafe_allow_html=True)
 
 # --- Data & Model Loading ---
