@@ -362,7 +362,7 @@ def display_jobs(jobs, user_skills):
             ("http://", "https://")) else raw_redirect_url
         # --- End FINAL Simplified URL Logic ---
 
-        # ***CRITICAL FIX: HTML tags are now flush left (no indentation)***
+        # *** CRITICAL FIX: The HTML block is now flush left ***
         st.markdown(
             f"""
 <div class="job-card-custom">
