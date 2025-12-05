@@ -245,6 +245,34 @@ def load_css():
 # Load the embedded CSS
 load_css()
 
+def fuzzy_match(skill, skill_list, threshold=65):
+    if not skill or not skill_list:
+        return None
+    match, score = process.extractOne(skill, skill_list, scorer=fuzz.token_set_ratio)
+    return match if score >= threshold else None
+
+
+def clean_text(text):
+    if not text:
+        return ""
+    text = text.lower()
+    text = re.sub(r"[/\-_+]", " ", text)
+    text = re.sub(r"[^\w\s]", " ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
+
+
+enhanced_skill_normalizer = {
+    "powerbi": "power bi", "power-bi": "power bi", "ml": "machine learning", "ai": "artificial intelligence",
+    "sql": "sql", "py": "python", "js": "javascript", "nodejs": "node.js", "reactjs": "react",
+    "angularjs": "angular", "css3": "css", "html5": "html", "aws": "amazon web services", "gcp": "google cloud platform"
+}
+
+
+def enhanced_normalize_skill(skill):
+    clean_skill = skill.lower().strip()
+    return enhanced_skill_normalizer.get(clean_skill, clean_skill)
+
 # Initialize session state variables
 if "analysis_done" not in st.session_state:
     st.session_state["analysis_done"] = False
@@ -354,33 +382,7 @@ def display_jobs(jobs, user_skills):
 # Note: The CSS class .job-link is defined in your load_css function and handles the blue styling.
 
 
-def fuzzy_match(skill, skill_list, threshold=65):
-    if not skill or not skill_list:
-        return None
-    match, score = process.extractOne(skill, skill_list, scorer=fuzz.token_set_ratio)
-    return match if score >= threshold else None
 
-
-def clean_text(text):
-    if not text:
-        return ""
-    text = text.lower()
-    text = re.sub(r"[/\-_+]", " ", text)
-    text = re.sub(r"[^\w\s]", " ", text)
-    text = re.sub(r"\s+", " ", text).strip()
-    return text
-
-
-enhanced_skill_normalizer = {
-    "powerbi": "power bi", "power-bi": "power bi", "ml": "machine learning", "ai": "artificial intelligence",
-    "sql": "sql", "py": "python", "js": "javascript", "nodejs": "node.js", "reactjs": "react",
-    "angularjs": "angular", "css3": "css", "html5": "html", "aws": "amazon web services", "gcp": "google cloud platform"
-}
-
-
-def enhanced_normalize_skill(skill):
-    clean_skill = skill.lower().strip()
-    return enhanced_skill_normalizer.get(clean_skill, clean_skill)
 
 
 def display_jobs(jobs, user_skills):
