@@ -368,21 +368,15 @@ def display_jobs(jobs, user_skills):
         # The HTML below uses the final_url and explicitly sets the button text to "🚀 Apply Now"
         st.markdown(
             f"""
-                    <div class="job-card-custom">
-                        <h4 class="job-title">{job.get("title", "No Title")}</h4>
-                        <p class="job-company">
-                            <b>{job.get("company", {}).get("display_name", "Unknown Company")}</b> | 📍 {job.get("location", {}).get("display_name", "Unknown Location")}
-                        </p>
-                        <p class="job-description">{job.get("description", "No description available")[:220]}...</p>
-                        <div class="job-skills"><b>Matching skills:</b> {skills_html}</div>
-
-                        <div style="margin-top: 15px;">
-                            <a href="{final_url}" target="_blank" class="btn-apply-now"> 
-                                🚀 Apply Now
-                            </a>
+                        <div class="job-card-custom">
+                            {/ *...other content...* /}
+                            <div style="margin-top: 15px;">
+                                <a href="{final_url}" target="_blank" class="btn-apply-now"> 
+                                    🚀 Apply Now
+                                </a>
+                            </div>
                         </div>
-                    </div>
-                    """,
+                        """,
             unsafe_allow_html=True
         )
 
