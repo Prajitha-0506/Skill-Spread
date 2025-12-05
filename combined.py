@@ -362,24 +362,24 @@ def display_jobs(jobs, user_skills):
             ("http://", "https://")) else raw_redirect_url
         # --- End FINAL Simplified URL Logic ---
 
-        # This structure is clean, uses the strong CSS class (btn-apply-now), and fixes the SyntaxError.
+        # ***CRITICAL FIX: HTML tags are now flush left (no indentation)***
         st.markdown(
             f"""
-                    <div class="job-card-custom">
-                        <h4 class="job-title">{job.get("title", "No Title")}</h4>
-                        <p class="job-company">
-                            <b>{job.get("company", {}).get("display_name", "Unknown Company")}</b> | 📍 {job.get("location", {}).get("display_name", "Unknown Location")}
-                        </p>
-                        <p class="job-description">{job.get("description", "No description available")[:220]}...</p>
-                        <div class="job-skills"><b>Matching skills:</b> {skills_html}</div>
+<div class="job-card-custom">
+    <h4 class="job-title">{job.get("title", "No Title")}</h4>
+    <p class="job-company">
+        <b>{job.get("company", {}).get("display_name", "Unknown Company")}</b> | 📍 {job.get("location", {}).get("display_name", "Unknown Location")}
+    </p>
+    <p class="job-description">{job.get("description", "No description available")[:220]}...</p>
+    <div class="job-skills"><b>Matching skills:</b> {skills_html}</div>
 
-                        <div style="margin-top: 15px;">
-                            <a href="{final_url}" target="_blank" class="btn-apply-now"> 
-                                🚀 Apply Now
-                            </a>
-                        </div>
-                    </div>
-                    """,
+    <div style="margin-top: 15px;">
+        <a href="{final_url}" target="_blank" class="btn-apply-now"> 
+            🚀 Apply Now
+        </a>
+    </div>
+</div>
+            """,
             unsafe_allow_html=True
         )
 
@@ -632,7 +632,7 @@ if st.session_state.get("analysis_done", False):
             else:
                 st.caption("Enter skills to see relevant jobs.")
     # --- Page 3: Resume Builder ---
-    elif st.session_state.get("page") == "📝 Resume Builder":
+    elif st.session_state.get("page") == "📝 Resume Points Builder":
         with st.spinner("Preparing AI Builder interface..."):
             st.markdown("# 📝 AI Resume Builder")
             st.info("Paste a job description below to get tailored resume bullet points based on your skills.",
