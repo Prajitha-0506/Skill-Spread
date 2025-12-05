@@ -355,17 +355,25 @@ def display_jobs(jobs, user_skills):
         else:
             skills_html = " ".join([f'<span class="skill-tag-match">{skill}</span>' for skill in matched_skills_in_job])
 
-        original_source_url = job.get("adref", job.get("adref_url", None))
+            # 1. Check for the best-case, direct-source link ('adref' or 'adref_url')
+            original_source_url = job.get("adref", job.get("adref_url", None))
 
-        # Use the original source if available, otherwise fall back to the Adzuna details page.
-        if original_source_url:
-            raw_redirect_url = original_source_url
-        else:
-            raw_redirect_url = job.get("redirect_url", "#")
+            # 2. Determine which URL to use
+            # Start with the safe default (Adzuna tracking link)
+            url_to_clean = job.get("redirect_url", "#")
 
-        # Ensure URL is properly formatted
-        final_url = "https://" + raw_redirect_url if raw_redirect_url and not raw_redirect_url.startswith(
-            ("http://", "https://")) else raw_redirect_url
+            # CRITICAL CHECK: Only use the original source if it is a string AND long enough to be a valid URL (e.g., more than 10 characters)
+            if original_source_url and isinstance(original_source_url, str) and len(original_source_url) > 10:
+                url_to_clean = original_source_url
+
+            # 3. Perform the necessary protocol cleanup
+            if url_to_clean.startswith(("http://", "https://")):
+                final_url = url_to_clean
+            elif url_to_clean == "#":
+                final_url = "#"
+            else:
+                # If it's just a domain or path, assume HTTPS for security
+                final_url = "https://" + url_to_clean
 
         company = job.get("company", {}).get("display_name", "Unknown Company")
         location = job.get("location", {}).get("display_name", "Remote/Unknown")
