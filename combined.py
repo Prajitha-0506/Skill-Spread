@@ -344,7 +344,6 @@ def display_jobs(jobs, user_skills):
         raw_text = (job.get("title", "") + " " + job.get("description", ""))
 
         # --- Skill Matching Logic ---
-        # NOTE: Assumes clean_text and enhanced_normalize_skill are defined elsewhere.
         text_to_search = clean_text(raw_text)
         matched_skills_in_job = list(dict.fromkeys([
             original_skill for original_skill in user_skills
@@ -359,30 +358,28 @@ def display_jobs(jobs, user_skills):
 
         # --- FINAL Simplified URL Logic ---
         raw_redirect_url = job.get("redirect_url", "#")
-        # Ensure URL is clean for external redirect
         final_url = "https://" + raw_redirect_url if raw_redirect_url and not raw_redirect_url.startswith(
             ("http://", "https://")) else raw_redirect_url
-
         # --- End FINAL Simplified URL Logic ---
 
-        # The HTML below uses the final_url and explicitly sets the button text to "🚀 Apply Now"
+        # This structure is clean, uses the strong CSS class (btn-apply-now), and fixes the SyntaxError.
         st.markdown(
             f"""
-                            <div class="job-card-custom">
-                                <h4 class="job-title">{job.get("title", "No Title")}</h4>
-                                <p class="job-company">
-                                    <b>{job.get("company", {}).get("display_name", "Unknown Company")}</b> | 📍 {job.get("location", {}).get("display_name", "Unknown Location")}
-                                </p>
-                                <p class="job-description">{job.get("description", "No description available")[:220]}...</p>
-                                <div class="job-skills"><b>Matching skills:</b> {skills_html}</div>
+                    <div class="job-card-custom">
+                        <h4 class="job-title">{job.get("title", "No Title")}</h4>
+                        <p class="job-company">
+                            <b>{job.get("company", {}).get("display_name", "Unknown Company")}</b> | 📍 {job.get("location", {}).get("display_name", "Unknown Location")}
+                        </p>
+                        <p class="job-description">{job.get("description", "No description available")[:220]}...</p>
+                        <div class="job-skills"><b>Matching skills:</b> {skills_html}</div>
 
-                                <div style="margin-top: 15px;">
-                                    <a href="{final_url}" target="_blank" class="btn-apply-now"> 
-                                        🚀 Apply Now
-                                    </a>
-                                </div>
-                            </div>
-                            """,
+                        <div style="margin-top: 15px;">
+                            <a href="{final_url}" target="_blank" class="btn-apply-now"> 
+                                🚀 Apply Now
+                            </a>
+                        </div>
+                    </div>
+                    """,
             unsafe_allow_html=True
         )
 
@@ -662,8 +659,9 @@ if st.session_state.get("analysis_done", False):
             # Assuming st.session_state.generated_points holds the stream object
             if hasattr(st.session_state.generated_points, '__iter__'):
                 for chunk in st.session_state.generated_points:
-                    full_response += chunk.text
-                    assistant_response_box.markdown(full_response)
+                    if chunk.text:  # <--- CRITICAL FIX ADDED HERE
+                        full_response += chunk.text
+                        assistant_response_box.markdown(full_response)
             else:
                 # Fallback if st.session_state.generated_points is just text
                 st.markdown(st.session_state.generated_points, unsafe_allow_html=True)
