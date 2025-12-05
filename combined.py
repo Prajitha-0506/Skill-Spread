@@ -362,7 +362,10 @@ def display_jobs(jobs, user_skills):
             ("http://", "https://")) else raw_redirect_url
         # --- End FINAL Simplified URL Logic ---
 
-        # *** CRITICAL FIX: The HTML block is now flush left ***
+        # *** CRITICAL FIX: Use st.write for maximum HTML rendering reliability ***
+        # We split the rendering into two parts for maximum safety against parsing errors.
+
+        # 1. Render the job card details using st.markdown
         st.markdown(
             f"""
 <div class="job-card-custom">
@@ -372,14 +375,21 @@ def display_jobs(jobs, user_skills):
     </p>
     <p class="job-description">{job.get("description", "No description available")[:220]}...</p>
     <div class="job-skills"><b>Matching skills:</b> {skills_html}</div>
+""",
+            unsafe_allow_html=True
+        )
 
+        # 2. Render the button using st.write in a separate block to guarantee HTML execution
+        st.write(
+            f"""
     <div style="margin-top: 15px;">
         <a href="{final_url}" target="_blank" class="btn-apply-now"> 
             🚀 Apply Now
         </a>
     </div>
-</div>
-            """,
+    </div> {/ * Closes job-card-custom from the markdown above * /}
+    <div style="margin-bottom: 20px;"></div> {/ * Adds the margin back that was removed by splitting the card * /}
+    """,
             unsafe_allow_html=True
         )
 
