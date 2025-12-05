@@ -368,19 +368,21 @@ def display_jobs(jobs, user_skills):
         # The HTML below uses the final_url and explicitly sets the button text to "🚀 Apply Now"
         st.markdown(
             f"""
-            <div class="job-card-custom">
-                <h4 class="job-title">{job.get("title", "No Title")}</h4>
-                <p class="job-company">
-                    <b>{job.get("company", {}).get("display_name", "Unknown Company")}</b> | 📍 {job.get("location", {}).get("display_name", "Unknown Location")}
-                </p>
-                <p class="job-description">{job.get("description", "No description available")[:220]}...</p>
-                <div class="job-skills"><b>Matching skills:</b> {skills_html}</div>
-                
-                <a href="{final_url}" target="_blank" class="btn-apply-now"> 
-                    🚀 Apply Now
-                </a>
-            </div>
-            """,
+                    <div class="job-card-custom">
+                        <h4 class="job-title">{job.get("title", "No Title")}</h4>
+                        <p class="job-company">
+                            <b>{job.get("company", {}).get("display_name", "Unknown Company")}</b> | 📍 {job.get("location", {}).get("display_name", "Unknown Location")}
+                        </p>
+                        <p class="job-description">{job.get("description", "No description available")[:220]}...</p>
+                        <div class="job-skills"><b>Matching skills:</b> {skills_html}</div>
+
+                        <div style="margin-top: 15px;"> {/ * < --- ADDED CONTAINER DIV * /}
+                            <a href="{final_url}" target="_blank" class="btn-apply-now"> 
+                                🚀 Apply Now
+                            </a>
+                        </div> {/ * < --- END ADDED CONTAINER DIV * /}
+                    </div>
+                    """,
             unsafe_allow_html=True
         )
 
@@ -486,7 +488,7 @@ if st.session_state.get("analysis_done", False):
     st.sidebar.header(f"Welcome, {st.session_state.name or 'User'}!")
 
     # Define the list of options clearly
-    NAV_OPTIONS = ["📊 Analysis Report", "🔍 Find Jobs", "📝 Resume Builder", "🤖 AI Career Chat"]
+    NAV_OPTIONS = ["📊 Analysis Report", "🔍 Find Jobs", "📝 Resume Points Builder", "🤖 AI Career Chat"]
     DEFAULT_PAGE = NAV_OPTIONS[0]  # Use the first element as the default
 
     current_page = st.session_state.get("page", DEFAULT_PAGE)
