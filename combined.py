@@ -168,8 +168,9 @@ def load_css():
         font-weight: 500;
         margin: 2px;
     }
-    /* CRITICAL FIX: Ensure the link is rendered as a button */
-    .job-card-custom .job-link {
+    
+    /* HIGH PRIORITY BUTTON STYLING */
+    .btn-apply-now {
         display: inline-block !important; 
         margin-top: 15px !important;
         background-color: #2a7fff !important; 
@@ -178,14 +179,14 @@ def load_css():
         text-decoration: none !important;
         border-radius: 8px !important; 
         font-weight: bold !important;
-        text-align: center !important; /* Added for centering text */
+        text-align: center !important; 
         transition: background-color 0.3s ease;
-        line-height: 1.2 !important; /* Adjust line height */
     }
-    .job-card-custom .job-link:hover {
+    .btn-apply-now:hover {
         background-color: #0056b3 !important;
         color: white !important;
     }
+    
 
     /* --- Chat Styling --- */
     [data-testid="stChatMessage"] {
@@ -374,8 +375,8 @@ def display_jobs(jobs, user_skills):
                 </p>
                 <p class="job-description">{job.get("description", "No description available")[:220]}...</p>
                 <div class="job-skills"><b>Matching skills:</b> {skills_html}</div>
-
-                <a href="{final_url}" target="_blank" class="job-link">
+                
+                <a href="{final_url}" target="_blank" class="btn-apply-now"> 
                     🚀 Apply Now
                 </a>
             </div>
@@ -700,8 +701,9 @@ if st.session_state.get("analysis_done", False) and st.session_state.get("page")
                     assistant_response_box = st.empty()  # Placeholder for streaming text
 
                     for chunk in response_stream:
-                        full_response += chunk.text
-                        assistant_response_box.markdown(full_response)
+                        if chunk.text:
+                            full_response += chunk.text
+                            assistant_response_box.markdown(full_response)
 
         # Append the final response to history
         st.session_state.chat_messages.append({"role": "assistant", "content": full_response})
