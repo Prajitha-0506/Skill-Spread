@@ -274,7 +274,8 @@ def create_prompt(skills, job_description):
 
 def generate_response(prompt):
     try:
-        genai.configure(api_key=st.secrets["gemini"]["api_key"])
+        # FIX: Access key via the "api" section, not a non-existent "gemini" section.
+        genai.configure(api_key=st.secrets["api"]["gemini_api_key"])
         model = genai.GenerativeModel('models/gemini-pro-latest')
 
         # CRITICAL FIX: Use streaming to reduce perceived latency
@@ -284,6 +285,7 @@ def generate_response(prompt):
         return response_stream
 
     except Exception as e:
+        # This catch is good, but the key error makes the traceback misleading
         st.error(f"An error occurred with the AI model: {e}")
         return None
 
