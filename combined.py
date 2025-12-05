@@ -168,18 +168,21 @@ def load_css():
         font-weight: 500;
         margin: 2px;
     }
-    .job-link {
-        display: inline-block !important; /* CRITICAL FIX: Ensure it behaves like a block */
+    /* CRITICAL FIX: Ensure the link is rendered as a button */
+    .job-card-custom .job-link {
+        display: inline-block !important; 
         margin-top: 15px !important;
-        background-color: #2a7fff !important; /* The blue background color */
-        color: white !important; /* White text color */
-        padding: 10px 18px !important; /* Padding inside the button */
+        background-color: #2a7fff !important; 
+        color: white !important; 
+        padding: 10px 18px !important; 
         text-decoration: none !important;
-        border-radius: 8px !important; /* Rounded corners */
+        border-radius: 8px !important; 
         font-weight: bold !important;
+        text-align: center !important; /* Added for centering text */
         transition: background-color 0.3s ease;
+        line-height: 1.2 !important; /* Adjust line height */
     }
-    .job-link:hover {
+    .job-card-custom .job-link:hover {
         background-color: #0056b3 !important;
         color: white !important;
     }
