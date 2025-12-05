@@ -353,15 +353,15 @@ def display_jobs(jobs, user_skills):
         else:
             skills_html = "".join([f'<span class="skill-tag-match">{skill}</span>' for skill in matched_skills_in_job])
 
-        # --- Simplified URL Logic: Use reliable redirect_url ---
+        # --- FINAL Simplified URL Logic ---
         raw_redirect_url = job.get("redirect_url", "#")
         # Ensure URL is clean for external redirect
         final_url = "https://" + raw_redirect_url if raw_redirect_url and not raw_redirect_url.startswith(
             ("http://", "https://")) else raw_redirect_url
 
-        # --- End Simplified URL Logic ---
+        # --- End FINAL Simplified URL Logic ---
 
-        # Using st.markdown to create a custom card
+        # The HTML below uses the final_url and explicitly sets the button text to "🚀 Apply Now"
         st.markdown(
             f"""
             <div class="job-card-custom">
