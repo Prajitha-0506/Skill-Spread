@@ -362,24 +362,35 @@ def display_jobs(jobs, user_skills):
         description = job.get("description", "No description available")[:220] + "..."
         # --- End Data Extraction ---
 
-        # --- The FINAL Stable URL Logic ---
+        # --- Defensive Prioritization Logic (Brings back direct link attempt) ---
+        original_source_url = job.get("adref", job.get("adref_url", None))
+        adzuna_fallback_url = job.get("redirect_url", "#")
 
-        # We prioritize the Adzuna redirect URL as it is the only guaranteed working link.
-        # The 'adref' field is too unreliable.
-        raw_url_to_use = job.get("redirect_url", "#")
-        button_text = "🔗 Apply on Adzuna"
+        # Start with the Adzuna tracking link (safe default)
+        url_to_use = adzuna_fallback_url
+        button_text = "🔗 View Full Posting (Safe)"
 
-        # Final URL cleanup for the tracking link
-        if raw_url_to_use.startswith(("http://", "https://")):
-            final_url = raw_url_to_use
-        elif raw_url_to_use == "#":
-            final_url = "#"
-        else:
-            final_url = "https://" + raw_url_to_use
+        # CRITICAL CHECK: Only attempt to use the direct link if it is a long, valid string.
+        is_preferred_link_valid = original_source_url and isinstance(original_source_url, str) and len(
+            original_source_url) > 15
 
-        # --- End FINAL Stable URL Logic ---
+        if is_preferred_link_valid:
+            # Clean the preferred URL
+            if original_source_url.startswith("http"):
+                cleaned_preferred_url = original_source_url
+            else:
+                cleaned_preferred_url = "https://" + original_source_url
 
-        # The HTML block is flush left (Guaranteed Button Display)
+            # Use the cleaned preferred URL and update button text
+            url_to_use = cleaned_preferred_url
+            button_text = "🚀 Apply Now (Direct)"
+
+        # Final URL assignment
+        final_url = url_to_use
+
+        # --- End Defensive Prioritization Logic ---
+
+        # The HTML block is flush left
         job_card_html = f"""
 <div class="job-card-custom">
     <h4 class="job-title">{title}</h4>
