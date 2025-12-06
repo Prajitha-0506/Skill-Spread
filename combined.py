@@ -362,33 +362,29 @@ def display_jobs(jobs, user_skills):
         description = job.get("description", "No description available")[:220] + "..."
         # --- End Data Extraction ---
 
-        # --- Defensive Prioritization Logic (Brings back direct link attempt) ---
+        # --- Dual URL Logic ---
         original_source_url = job.get("adref", job.get("adref_url", None))
         adzuna_fallback_url = job.get("redirect_url", "#")
 
-        # Start with the Adzuna tracking link (safe default)
-        url_to_use = adzuna_fallback_url
-        button_text = "🔗 View Full Posting (Safe)"
+        # 1. Prepare the SAFE (Fallback) URL
+        final_safe_url = "https://" + adzuna_fallback_url if adzuna_fallback_url and not adzuna_fallback_url.startswith(
+            ("http", "https")) else adzuna_fallback_url
 
-        # CRITICAL CHECK: Only attempt to use the direct link if it is a long, valid string.
-        is_preferred_link_valid = original_source_url and isinstance(original_source_url, str) and len(
-            original_source_url) > 15
+        # 2. Prepare the DIRECT (Risky) URL
+        final_direct_url = None
+        is_direct_link_available = False
 
-        if is_preferred_link_valid:
+        # Only process if the adref link is a sufficiently long string
+        if original_source_url and isinstance(original_source_url, str) and len(original_source_url) > 15:
             # Clean the preferred URL
             if original_source_url.startswith("http"):
-                cleaned_preferred_url = original_source_url
+                final_direct_url = original_source_url
             else:
-                cleaned_preferred_url = "https://" + original_source_url
+                final_direct_url = "https://" + original_source_url
 
-            # Use the cleaned preferred URL and update button text
-            url_to_use = cleaned_preferred_url
-            button_text = "🚀 Apply Now (Direct)"
+            is_direct_link_available = True
 
-        # Final URL assignment
-        final_url = url_to_use
-
-        # --- End Defensive Prioritization Logic ---
+        # --- End Dual URL Logic ---
 
         # The HTML block is flush left
         job_card_html = f"""
@@ -398,9 +394,15 @@ def display_jobs(jobs, user_skills):
     <p class="job-description">{description}</p>
     <div class="job-skills"><b>Matching skills:</b> {skills_html}</div>
     <div style="margin-top: 15px;">
-        <a href="{final_url}" target="_blank" class="btn-apply-now">
-            {button_text}
+
+        {/ * Button 1: The Safe Adzuna Link */}
+        <a href="{final_safe_url}" target="_blank" class="btn-apply-now">
+            🔗 View Full Posting (Adzuna)
         </a>
+
+        {/ * Button 2: The Risky Direct Link (Only show if URL looks long enough to be real) */}
+        {'<a href="' + final_direct_url + '" target="_blank" class="btn-apply-now" style="background-color: #555; margin-left: 10px;">🚀 Try Direct Link</a>' if is_direct_link_available else ''}
+
     </div>
 </div>
 <div style="margin-bottom: 20px;"></div>
