@@ -358,22 +358,31 @@ def display_jobs(jobs, user_skills):
         title = job.get("title", "No Title")
         description = job.get("description", "No description available")[:220] + "..."
 
-        # --- FINAL STABLE URL LOGIC (Single Button) ---
-        # This is the guaranteed working link (Adzuna tracking page).
-        raw_url_to_use = job.get("redirect_url", "#")
+        # --- Dual URL Logic (Brings back LinkedIn redirection) ---
+        original_source_url = job.get("adref", job.get("adref_url", None))
+        adzuna_fallback_url = job.get("redirect_url", "#")
 
-        # Ensure the URL is properly formatted with a protocol
-        if raw_url_to_use.startswith(("http://", "https://")):
-            final_url = raw_url_to_use
-        elif raw_url_to_use == "#":
-            final_url = "#"
-        else:
-            final_url = "https://" + raw_url_to_use
+        # 1. Prepare the SAFE (Fallback) URL
+        final_safe_url = "https://" + adzuna_fallback_url if adzuna_fallback_url and not adzuna_fallback_url.startswith(
+            ("http", "https")) else adzuna_fallback_url
 
-        button_text = "🔗 View Full Posting (Adzuna)"
-        # --- End FINAL STABLE URL LOGIC ---
+        # 2. Prepare the DIRECT (Risky) URL
+        final_direct_url = None
+        is_direct_link_available = False
 
-        # The HTML block is flush left
+        # CRITICAL CHECK: Only process if the adref link is a sufficiently long string
+        if original_source_url and isinstance(original_source_url, str) and len(original_source_url) > 15:
+            # Clean the preferred URL (add https:// if missing)
+            if original_source_url.startswith("http"):
+                final_direct_url = original_source_url
+            else:
+                final_direct_url = "https://" + original_source_url
+
+            is_direct_link_available = True
+
+        # --- End Dual URL Logic ---
+
+        # The HTML block with two buttons
         job_card_html = f"""
 <div class="job-card-custom">
     <h4 class="job-title">{title}</h4>
@@ -381,9 +390,13 @@ def display_jobs(jobs, user_skills):
     <p class="job-description">{description}</p>
     <div class="job-skills"><b>Matching skills:</b> {skills_html}</div>
     <div style="margin-top: 15px;">
-        <a href="{final_url}" target="_blank" class="job-link">
-            {button_text}
+
+        <a href="{final_safe_url}" target="_blank" class="job-link" style="background-color: #555;">
+            🔗 View Posting (Adzuna - Safe)
         </a>
+
+        {'<a href="' + final_direct_url + '" target="_blank" class="job-link" style="background-color: #0077B5; margin-left: 10px;">🚀 Try Direct Link (LinkedIn/Company)</a>' if is_direct_link_available else ''}
+
     </div>
 </div>
 <div style="margin-bottom: 20px;"></div>
