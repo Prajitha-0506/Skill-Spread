@@ -169,22 +169,30 @@ def load_css():
         margin: 2px;
     }
     
-    /* HIGH PRIORITY BUTTON STYLING */
+    /* BIG APPLY NOW BUTTON - HIGH VISIBILITY */
     .btn-apply-now {
-        display: inline-block !important; 
-        margin-top: 15px !important;
-        background-color: #2a7fff !important; 
-        color: white !important; 
-        padding: 10px 18px !important; 
+        display: inline-block !important;
+        width: 85% !important;
+        max-width: 420px;
+        padding: 14px 20px !important;
+        background: linear-gradient(135deg, #2a7fff, #1a6de6) !important;
+        color: white !important;
+        font-size: 1.15rem !important;
+        font-weight: 700 !important;
+        text-align: center !important;
+        border-radius: 12px !important;
         text-decoration: none !important;
-        border-radius: 8px !important; 
-        font-weight: bold !important;
-        text-align: center !important; 
-        transition: background-color 0.3s ease;
+        box-shadow: 0 6px 20px rgba(42, 127, 255, 0.4) !important;
+        transition: all 0.3s ease !important;
+        border: none !important;
     }
     .btn-apply-now:hover {
-        background-color: #0056b3 !important;
-        color: white !important;
+        transform: translateY(-4px) !important;
+        box-shadow: 0 12px 30px rgba(42, 127, 255, 0.5) !important;
+        background: linear-gradient(135deg, #1a6de6, #0d5bd8) !important;
+    }
+    .btn-apply-now:active {
+        transform: translateY(-1px) !important;
     }
     
 
@@ -337,7 +345,7 @@ if "chat_messages" not in st.session_state:
 
 def display_jobs(jobs, user_skills):
     if not user_skills:
-        st.info("⚠️ No skills provided to match against job descriptions.")
+        st.info("No skills provided to match against job descriptions.")
         return
 
     for job in jobs:
@@ -356,50 +364,71 @@ def display_jobs(jobs, user_skills):
         company = job.get("company", {}).get("display_name", "Unknown Company")
         location = job.get("location", {}).get("display_name", "Remote/Unknown")
         title = job.get("title", "No Title")
-        description = job.get("description", "No description available")[:220] + "..."
+        description = job.get("description", "No description available")[:240] + "..."
 
-        # --- Dual URL Logic (Brings back LinkedIn redirection) ---
+        # --- URL Logic: Smart Direct → Fallback ---
         original_source_url = job.get("adref", job.get("adref_url", None))
         adzuna_fallback_url = job.get("redirect_url", "#")
 
-        # 1. Prepare the SAFE (Fallback) URL
-        final_safe_url = "https://" + adzuna_fallback_url if adzuna_fallback_url and not adzuna_fallback_url.startswith(
-            ("http", "https")) else adzuna_fallback_url
+        # Safe fallback URL
+        final_safe_url = adzuna_fallback_url
+        if final_safe_url and not final_safe_url.startswith(("http://", "https://")):
+            final_safe_url = "https://" + final_safe_url
 
-        # 2. Prepare the DIRECT (Risky) URL
+        # Direct source URL (LinkedIn, company site, etc.)
         final_direct_url = None
         is_direct_link_available = False
 
-        if original_source_url and isinstance(original_source_url, str) and len(original_source_url) > 15:
-            if original_source_url.startswith("http"):
+        if original_source_url and isinstance(original_source_url, str) and len(original_source_url) > 10:
+            if original_source_url.startswith(("http://", "https://")):
                 final_direct_url = original_source_url
             else:
                 final_direct_url = "https://" + original_source_url
-
             is_direct_link_available = True
 
-        # --- End Dual URL Logic ---
+        # Decide which URL to use for the main "Apply Now" button
+        apply_url = final_safe_url  # default
+        button_label = "Apply Now"
 
-        # The HTML block is now flush-left to prevent the markdown code block issue,
-        # and uses the consistent 'job-link' class for proper rendering.
+        if is_direct_link_available and final_direct_url:
+            apply_url = final_direct_url
+            if "linkedin.com" in final_direct_url.lower():
+                button_label = "Apply Now on LinkedIn"
+            elif "naukri.com" in final_direct_url.lower():
+                button_label = "Apply Now on Naukri"
+            elif "indeed.com" in final_direct_url.lower():
+                button_label = "Apply Now on Indeed"
+            elif any(x in final_direct_url.lower() for x in ["greenhouse", "lever", "workday", "jobs."]):
+                button_label = "Apply Now on Company Site"
+            else:
+                button_label = "Apply Now (Direct Link)"
+
+        # --- Final Job Card with BIG Apply Button ---
         job_card_html = f"""
-<div class="job-card-custom">
-    <h4 class="job-title">{title}</h4>
-    <p class="job-company"><b>{company}</b> | 📍 {location}</p>
-    <p class="job-description">{description}</p>
-    <div class="job-skills"><b>Matching skills:</b> {skills_html}</div>
-    <div style="margin-top: 15px;">
+        <div class="job-card-custom">
+            <h4 class="job-title">{html.escape(title)}</h4>
+            <p class="job-company"><strong>{html.escape(company)}</strong> • 📍 {html.escape(location)}</p>
+            <p class="job-description">{html.escape(description)}</p>
+            <div class="job-skills"><strong>Matching Skills:</strong> {skills_html}</div>
 
-        <a href="{final_safe_url}" target="_blank" class="job-link" style="background-color: #555;">
-            🔗 View Posting (Adzuna - Safe)
-        </a>
+            <div style="margin-top: 20px; text-align: center;">
+                <a href="{apply_url}" target="_blank" class="btn-apply-now" rel="noopener">
+                    {button_label}
+                </a>
+            </div>
 
-        {('<a href="' + final_direct_url + '" target="_blank" class="job-link" style="background-color: #0077B5; margin-left: 10px;">🚀 Try Direct Link (LinkedIn/Company)</a>') if is_direct_link_available else ''}
+            <!-- Optional: Small fallback link if direct link might be unreliable -->
+            {'''
+            <div style="margin-top: 10px; text-align: center; font-size: 0.85em; opacity: 0.8;">
+                <a href="{0}" target="_blank" style="color: #88c0ff; text-decoration: underline;">
+                    Not redirecting? → Try job board link
+                </a>
+            </div>
+            '''.format(final_safe_url) if apply_url != final_safe_url else ''}
+        </div>
+        <br>
+        """.strip()
 
-    </div>
-</div>
-<div style="margin-bottom: 20px;"></div>
-"""
         st.markdown(job_card_html, unsafe_allow_html=True)
 
 # --- Data & Model Loading ---
