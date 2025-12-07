@@ -121,17 +121,17 @@ def load_css():
 
     /* --- Job Card Styling --- */
     .job-card-custom {
+        background: #1e2a38;
         border: 1px solid #444;
         border-radius: 16px;
         padding: 20px;
         margin: 20px 0;
-        background: #1e2a38;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.4);
         transition: all 0.3s ease;
     }
     .job-card-custom:hover {
         transform: translateY(-5px);
-        box-shadow: 0 12px 30px rgba(42,127,255,0.2);
+        box-shadow: 0 12px 30px rgba(42,127,255,0.25);
         border-color: #2a7fff;
     }
     .job-title {
@@ -173,7 +173,7 @@ def load_css():
     /* BIG APPLY NOW BUTTON - HIGH VISIBILITY */
     .btn-apply-now {
         display: inline-block !important;
-        padding: 14px 32px !important;
+        padding: 14px 36px !important;
         background: linear-gradient(135deg, #2a7fff, #1a6de6) !important;
         color: white !important;
         font-size: 1.1rem !important;
@@ -184,7 +184,7 @@ def load_css():
         transition: all 0.3s ease !important;
     }
     .btn-apply-now:hover {
-        transform: translateY(-3px) !important;
+        transform: translateY(-4px) !important;
         box-shadow: 0 12px 30px rgba(42,127,255,0.6) !important;
     }
     .btn-apply-now:active {
