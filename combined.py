@@ -358,8 +358,8 @@ def display_jobs(jobs, user_skills):
         title = job.get("title", "No Title")
         description = job.get("description", "No description available")[:220] + "..."
 
-        # --- FINAL STABLE URL LOGIC (Button 1 Only) ---
-        # We prioritize the Adzuna redirect URL as it is the only guaranteed working link.
+        # --- FINAL STABLE URL LOGIC (Single Button) ---
+        # This is the guaranteed working link (Adzuna tracking page).
         raw_url_to_use = job.get("redirect_url", "#")
 
         # Ensure the URL is properly formatted with a protocol
