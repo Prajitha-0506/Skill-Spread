@@ -345,7 +345,7 @@ def display_jobs(jobs, user_skills):
         return
 
     for job in jobs:
-        # Skill matching logic
+        # --- Skill matching ---
         raw_text = (job.get("title", "") + " " + job.get("description", ""))
         text_to_search = clean_text(raw_text)
         matched_skills_in_job = list(dict.fromkeys([
@@ -353,34 +353,54 @@ def display_jobs(jobs, user_skills):
             if enhanced_normalize_skill(original_skill) in text_to_search
         ]))
 
-        skills_html = "".join([f'<span class="skill-tag-match">{skill}</span>' for skill in matched_skills_in_job]) if matched_skills_in_job else '<span class="skill-tag-neutral">No direct skill matches found</span>'
+        if matched_skills_in_job:
+            skills_html = "".join(
+                f'<span class="skill-tag-match">{skill}</span>' for skill in matched_skills_in_job
+            )
+        else:
+            skills_html = '<span class="skill-tag-neutral">No direct skill matches found</span>'
 
-        company = html.escape(job.get("company", {}).get("display_name", "Unknown Company"))
-        location = html.escape(job.get("location", {}).get("display_name", "Remote"))
-        title = html.escape(job.get("title", "No Title"))
+        # --- Basic job info (escaped for safety) ---
+        company   = html.escape(job.get("company", {}).get("display_name", "Unknown Company"))
+        location  = html.escape(job.get("location", {}).get("display_name", "Remote"))
+        title     = html.escape(job.get("title", "No Title"))
         description = html.escape(job.get("description", "No description available")[:240] + "...")
 
-        # === URL LOGIC (FIXED & BULLETPROOF) ===
+        # --- URL handling ---
         adzuna_url = job.get("redirect_url", "")
         direct_url = job.get("adref", None)
 
-        # Clean up URLs
+        # Safe fallback URL
         safe_url = adzuna_url if adzuna_url.startswith("http") else f"https://{adzuna_url}" if adzuna_url else "#"
-        final_url = safe_url
+
+        # Decide final URL and button text
+        final_url   = safe_url
         button_text = "Apply Now"
 
         if direct_url and isinstance(direct_url, str) and len(direct_url) > 10:
             candidate = direct_url if direct_url.startswith("http") else f"https://{direct_url}"
-            if any(domain in candidate.lower() for domain in ["linkedin", "naukri", "indeed", "greenhouse", "lever", "workday"]):
+            lower = candidate.lower()
+            if any(dom in lower for dom in ["linkedin", "naukri", "indeed", "greenhouse", "lever", "workday"]):
                 final_url = candidate
-                if "linkedin" in candidate.lower():
+                if "linkedin" in lower:
                     button_text = "Apply Now on LinkedIn"
-                elif "naukri" in candidate.lower():
+                elif "naukri" in lower:
                     button_text = "Apply Now on Naukri"
                 else:
                     button_text = "Apply Now (Direct Link)"
 
-        # === FINAL HTML - GUARANTEED TO RENDER ===
+        # --- Build the fallback link (only shown when we are using the direct link) ---
+        fallback_html = ""
+        if final_url != safe_url and safe_url != "#":
+            fallback_html = f'''
+            <div style="text-align: center; margin-top: 8px; font-size: 0.8em; opacity: 0.7;">
+                <a href="{safe_url}" target="_blank" rel="noopener" style="color: #88c0ff; text-decoration: underline;">
+                    Not working? Try safe link
+                </a>
+            </div>
+            '''
+
+        # --- Final card HTML ---
         job_card = f"""
         <div class="job-card-custom">
             <h4 class="job-title">{title}</h4>
@@ -394,14 +414,11 @@ def display_jobs(jobs, user_skills):
                 </a>
             </div>
 
-            {f'<div style="text-align: center; margin-top: 8px; font-size: 0.8em; opacity: 0.7;">
-                <a href="{safe_url}" target="_blank" style="color: #88c0ff;">Not working? Try safe link →</a>
-            </div>' if final_url != safe_url and safe_url != "#" else ''}
+            {fallback_html}
         </div>
         <br>
         """
 
-        # THIS IS THE MOST IMPORTANT LINE - NEVER FORGET IT
         st.markdown(job_card, unsafe_allow_html=True)
 
 # --- Data & Model Loading ---
