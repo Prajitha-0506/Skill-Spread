@@ -360,7 +360,7 @@ def display_jobs(jobs, user_skills):
         else:
             skills_html = '<span class="skill-tag-neutral">No direct skill matches found</span>'
 
-        # --- Basic job info (escaped for safety) ---
+        # --- Basic job info (escaped for safety, BUT NOT THE BUTTON) ---
         company   = html.escape(job.get("company", {}).get("display_name", "Unknown Company"))
         location  = html.escape(job.get("location", {}).get("display_name", "Remote"))
         title     = html.escape(job.get("title", "No Title"))
@@ -400,7 +400,17 @@ def display_jobs(jobs, user_skills):
             </div>
             '''
 
-        # --- Final card HTML ---
+        # --- CRITICAL FIX: Don't escape the button HTML ---
+        # Create the button HTML separately without escaping
+        button_html = f'''
+        <div style="margin: 25px 0; text-align: center;">
+            <a href="{final_url}" target="_blank" rel="noopener noreferrer" class="btn-apply-now">
+                {button_text}
+            </a>
+        </div>
+        '''
+
+        # --- Final card HTML (button is NOT escaped) ---
         job_card = f"""
         <div class="job-card-custom">
             <h4 class="job-title">{title}</h4>
@@ -408,11 +418,7 @@ def display_jobs(jobs, user_skills):
             <p class="job-description">{description}</p>
             <div class="job-skills"><strong>Matching Skills:</strong> {skills_html}</div>
 
-            <div style="margin: 25px 0; text-align: center;">
-                <a href="{final_url}" target="_blank" rel="noopener noreferrer" class="btn-apply-now">
-                    {button_text}
-                </a>
-            </div>
+            {button_html}
 
             {fallback_html}
         </div>
