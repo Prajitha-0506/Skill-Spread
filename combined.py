@@ -380,7 +380,8 @@ def display_jobs(jobs, user_skills):
 
         # --- End Dual URL Logic ---
 
-        # The HTML block with two buttons - INDENTATION REMOVED
+        # The HTML block is now flush-left to prevent the markdown code block issue,
+        # and uses the consistent 'job-link' class.
         job_card_html = f"""
 <div class="job-card-custom">
     <h4 class="job-title">{title}</h4>
