@@ -358,7 +358,7 @@ def display_jobs(jobs, user_skills):
         title = job.get("title", "No Title")
         description = job.get("description", "No description available")[:220] + "..."
 
-        # --- Dual URL Logic (Brings back LinkedIn redirection) ---
+        # --- Dual URL Logic ---
         original_source_url = job.get("adref", job.get("adref_url", None))
         adzuna_fallback_url = job.get("redirect_url", "#")
 
@@ -370,9 +370,7 @@ def display_jobs(jobs, user_skills):
         final_direct_url = None
         is_direct_link_available = False
 
-        # CRITICAL CHECK: Only process if the adref link is a sufficiently long string
         if original_source_url and isinstance(original_source_url, str) and len(original_source_url) > 15:
-            # Clean the preferred URL (add https:// if missing)
             if original_source_url.startswith("http"):
                 final_direct_url = original_source_url
             else:
@@ -382,7 +380,7 @@ def display_jobs(jobs, user_skills):
 
         # --- End Dual URL Logic ---
 
-        # The HTML block with two buttons
+        # The HTML block with two buttons - CLEANED for proper rendering
         job_card_html = f"""
 <div class="job-card-custom">
     <h4 class="job-title">{title}</h4>
@@ -395,7 +393,7 @@ def display_jobs(jobs, user_skills):
             🔗 View Posting (Adzuna - Safe)
         </a>
 
-        {'<a href="' + final_direct_url + '" target="_blank" class="job-link" style="background-color: #0077B5; margin-left: 10px;">🚀 Try Direct Link (LinkedIn/Company)</a>' if is_direct_link_available else ''}
+        {('<a href="' + final_direct_url + '" target="_blank" class="job-link" style="background-color: #0077B5; margin-left: 10px;">🚀 Try Direct Link (LinkedIn/Company)</a>') if is_direct_link_available else ''}
 
     </div>
 </div>
