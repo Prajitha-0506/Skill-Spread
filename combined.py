@@ -342,8 +342,6 @@ def display_jobs(jobs, user_skills):
 
     for job in jobs:
         raw_text = (job.get("title", "") + " " + job.get("description", ""))
-
-        # --- Skill Matching Logic (Keep as is) ---
         text_to_search = clean_text(raw_text)
         matched_skills_in_job = list(dict.fromkeys([
             original_skill for original_skill in user_skills
@@ -353,38 +351,27 @@ def display_jobs(jobs, user_skills):
         if not matched_skills_in_job:
             skills_html = '<span class="skill-tag-neutral">No direct skill matches found</span>'
         else:
-            skills_html = " ".join([f'<span class="skill-tag-match">{skill}</span>' for skill in matched_skills_in_job])
+            skills_html = "".join([f'<span class="skill-tag-match">{skill}</span>' for skill in matched_skills_in_job])
 
-        # --- Data Extraction (Keep as is) ---
         company = job.get("company", {}).get("display_name", "Unknown Company")
         location = job.get("location", {}).get("display_name", "Remote/Unknown")
         title = job.get("title", "No Title")
         description = job.get("description", "No description available")[:220] + "..."
-        # --- End Data Extraction ---
 
-        # --- Dual URL Logic ---
-        original_source_url = job.get("adref", job.get("adref_url", None))
-        adzuna_fallback_url = job.get("redirect_url", "#")
+        # --- FINAL STABLE URL LOGIC (Button 1 Only) ---
+        # We prioritize the Adzuna redirect URL as it is the only guaranteed working link.
+        raw_url_to_use = job.get("redirect_url", "#")
 
-        # 1. Prepare the SAFE (Fallback) URL
-        final_safe_url = "https://" + adzuna_fallback_url if adzuna_fallback_url and not adzuna_fallback_url.startswith(
-            ("http", "https")) else adzuna_fallback_url
+        # Ensure the URL is properly formatted with a protocol
+        if raw_url_to_use.startswith(("http://", "https://")):
+            final_url = raw_url_to_use
+        elif raw_url_to_use == "#":
+            final_url = "#"
+        else:
+            final_url = "https://" + raw_url_to_use
 
-        # 2. Prepare the DIRECT (Risky) URL
-        final_direct_url = None
-        is_direct_link_available = False
-
-        # Only process if the adref link is a sufficiently long string
-        if original_source_url and isinstance(original_source_url, str) and len(original_source_url) > 15:
-            # Clean the preferred URL
-            if original_source_url.startswith("http"):
-                final_direct_url = original_source_url
-            else:
-                final_direct_url = "https://" + original_source_url
-
-            is_direct_link_available = True
-
-        # --- End Dual URL Logic ---
+        button_text = "🔗 View Full Posting (Adzuna)"
+        # --- End FINAL STABLE URL LOGIC ---
 
         # The HTML block is flush left
         job_card_html = f"""
@@ -394,15 +381,9 @@ def display_jobs(jobs, user_skills):
     <p class="job-description">{description}</p>
     <div class="job-skills"><b>Matching skills:</b> {skills_html}</div>
     <div style="margin-top: 15px;">
-
-        {/ * Button 1: The Safe Adzuna Link */}
-        <a href="{final_safe_url}" target="_blank" class="btn-apply-now">
-            🔗 View Full Posting (Adzuna)
+        <a href="{final_url}" target="_blank" class="job-link">
+            {button_text}
         </a>
-
-        {/ * Button 2: The Risky Direct Link (Only show if URL looks long enough to be real) */}
-        {'<a href="' + final_direct_url + '" target="_blank" class="btn-apply-now" style="background-color: #555; margin-left: 10px;">🚀 Try Direct Link</a>' if is_direct_link_available else ''}
-
     </div>
 </div>
 <div style="margin-bottom: 20px;"></div>
