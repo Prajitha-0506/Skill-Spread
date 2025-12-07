@@ -360,38 +360,53 @@ def display_jobs(jobs, user_skills):
         else:
             skills_html = '<span class="skill-tag-neutral">No direct skill matches found</span>'
 
-        # --- Basic job info (escaped for safety, BUT NOT THE BUTTON) ---
-        company   = html.escape(job.get("company", {}).get("display_name", "Unknown Company"))
-        location  = html.escape(job.get("location", {}).get("display_name", "Remote"))
-        title     = html.escape(job.get("title", "No Title"))
+        # --- Basic job info ---
+        company = html.escape(job.get("company", {}).get("display_name", "Unknown Company"))
+        location = html.escape(job.get("location", {}).get("display_name", "Remote"))
+        title = html.escape(job.get("title", "No Title"))
         description = html.escape(job.get("description", "No description available")[:240] + "...")
 
-        # --- URL handling ---
+        # --- URL handling: PRIORITIZE LinkedIn/Direct URLs ---
         adzuna_url = job.get("redirect_url", "")
         direct_url = job.get("adref", None)
 
-        # Safe fallback URL
-        safe_url = adzuna_url if adzuna_url.startswith("http") else f"https://{adzuna_url}" if adzuna_url else "#"
-
-        # Decide final URL and button text
-        final_url   = safe_url
+        # Default to Adzuna URL
+        final_url = adzuna_url
         button_text = "Apply Now"
 
-        if direct_url and isinstance(direct_url, str) and len(direct_url) > 10:
-            candidate = direct_url if direct_url.startswith("http") else f"https://{direct_url}"
-            lower = candidate.lower()
-            if any(dom in lower for dom in ["linkedin", "naukri", "indeed", "greenhouse", "lever", "workday"]):
-                final_url = candidate
-                if "linkedin" in lower:
-                    button_text = "Apply Now on LinkedIn"
-                elif "naukri" in lower:
-                    button_text = "Apply Now on Naukri"
-                else:
-                    button_text = "Apply Now (Direct Link)"
+        # Check if there's a direct URL (like LinkedIn)
+        if direct_url and isinstance(direct_url, str):
+            # Clean and prepare the direct URL
+            if direct_url.startswith("http"):
+                direct_candidate = direct_url
+            else:
+                direct_candidate = f"https://{direct_url}"
+
+            # Check if it's a LinkedIn URL
+            if "linkedin.com" in direct_candidate.lower():
+                final_url = direct_candidate
+                button_text = "Apply Now on LinkedIn"
+            elif "naukri.com" in direct_candidate.lower():
+                final_url = direct_candidate
+                button_text = "Apply Now on Naukri"
+            elif any(dom in direct_candidate.lower() for dom in
+                     ["indeed.com", "greenhouse.io", "lever.co", "workday.com"]):
+                final_url = direct_candidate
+                button_text = "Apply Now (Direct Link)"
+
+        # Ensure URL has http/https prefix
+        if final_url and not final_url.startswith("http"):
+            final_url = f"https://{final_url}"
+
+        # Safe fallback URL (Adzuna)
+        safe_url = adzuna_url
+        if safe_url and not safe_url.startswith("http"):
+            safe_url = f"https://{safe_url}"
 
         # --- Build the fallback link (only shown when we are using the direct link) ---
         fallback_html = ""
-        if final_url != safe_url and safe_url != "#":
+        # Show fallback only if we're using a direct URL (not Adzuna) AND Adzuna URL exists
+        if final_url != safe_url and safe_url and safe_url != "https://":
             fallback_html = f'''
             <div style="text-align: center; margin-top: 8px; font-size: 0.8em; opacity: 0.7;">
                 <a href="{safe_url}" target="_blank" rel="noopener" style="color: #88c0ff; text-decoration: underline;">
@@ -400,17 +415,7 @@ def display_jobs(jobs, user_skills):
             </div>
             '''
 
-        # --- CRITICAL FIX: Don't escape the button HTML ---
-        # Create the button HTML separately without escaping
-        button_html = f'''
-        <div style="margin: 25px 0; text-align: center;">
-            <a href="{final_url}" target="_blank" rel="noopener noreferrer" class="btn-apply-now">
-                {button_text}
-            </a>
-        </div>
-        '''
-
-        # --- Final card HTML (button is NOT escaped) ---
+        # --- Job card HTML ---
         job_card = f"""
         <div class="job-card-custom">
             <h4 class="job-title">{title}</h4>
@@ -418,7 +423,11 @@ def display_jobs(jobs, user_skills):
             <p class="job-description">{description}</p>
             <div class="job-skills"><strong>Matching Skills:</strong> {skills_html}</div>
 
-            {button_html}
+            <div style="margin: 25px 0; text-align: center;">
+                <a href="{final_url}" target="_blank" rel="noopener noreferrer" class="btn-apply-now">
+                    {button_text}
+                </a>
+            </div>
 
             {fallback_html}
         </div>
