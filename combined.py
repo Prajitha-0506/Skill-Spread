@@ -358,7 +358,7 @@ def display_jobs(jobs, user_skills):
         title = job.get("title", "No Title")
         description = job.get("description", "No description available")[:220] + "..."
 
-        # --- Dual URL Logic ---
+        # --- Dual URL Logic (Brings back LinkedIn redirection) ---
         original_source_url = job.get("adref", job.get("adref_url", None))
         adzuna_fallback_url = job.get("redirect_url", "#")
 
@@ -381,7 +381,7 @@ def display_jobs(jobs, user_skills):
         # --- End Dual URL Logic ---
 
         # The HTML block is now flush-left to prevent the markdown code block issue,
-        # and uses the consistent 'job-link' class.
+        # and uses the consistent 'job-link' class for proper rendering.
         job_card_html = f"""
 <div class="job-card-custom">
     <h4 class="job-title">{title}</h4>
