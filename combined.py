@@ -360,11 +360,23 @@ def display_jobs(jobs, user_skills):
         else:
             skills_html = '<span class="skill-tag-neutral">No direct skill matches found</span>'
 
-        # --- Basic job info ---
-        company = html.escape(job.get("company", {}).get("display_name", "Unknown Company"))
-        location = html.escape(job.get("location", {}).get("display_name", "Remote"))
-        title = html.escape(job.get("title", "No Title"))
-        description = html.escape(job.get("description", "No description available")[:240] + "...")
+        # --- Extract job data ---
+        company = job.get("company", {}).get("display_name", "Unknown Company")
+        location = job.get("location", {}).get("display_name", "Remote")
+        title = job.get("title", "No Title")
+        description = job.get("description", "No description available")
+
+        # --- Clean the description: Remove HTML tags and truncate ---
+        import re
+        # Remove HTML tags
+        clean_description = re.sub(r'<[^>]+>', '', description)
+        # Truncate and escape for safety
+        clean_description = html.escape(clean_description[:240] + "...")
+
+        # Escape other text fields
+        safe_company = html.escape(company)
+        safe_location = html.escape(location)
+        safe_title = html.escape(title)
 
         # --- URL handling: PRIORITIZE LinkedIn/Direct URLs ---
         adzuna_url = job.get("redirect_url", "")
@@ -375,7 +387,7 @@ def display_jobs(jobs, user_skills):
         button_text = "Apply Now"
 
         # Check if there's a direct URL (like LinkedIn)
-        if direct_url and isinstance(direct_url, str):
+        if direct_url and isinstance(direct_url, str) and len(direct_url) > 5:
             # Clean and prepare the direct URL
             if direct_url.startswith("http"):
                 direct_candidate = direct_url
@@ -397,6 +409,8 @@ def display_jobs(jobs, user_skills):
         # Ensure URL has http/https prefix
         if final_url and not final_url.startswith("http"):
             final_url = f"https://{final_url}"
+        elif not final_url:
+            final_url = "#"
 
         # Safe fallback URL (Adzuna)
         safe_url = adzuna_url
@@ -418,9 +432,9 @@ def display_jobs(jobs, user_skills):
         # --- Job card HTML ---
         job_card = f"""
         <div class="job-card-custom">
-            <h4 class="job-title">{title}</h4>
-            <p class="job-company"><strong>{company}</strong> • 📍 {location}</p>
-            <p class="job-description">{description}</p>
+            <h4 class="job-title">{safe_title}</h4>
+            <p class="job-company"><strong>{safe_company}</strong> • 📍 {safe_location}</p>
+            <p class="job-description">{clean_description}</p>
             <div class="job-skills"><strong>Matching Skills:</strong> {skills_html}</div>
 
             <div style="margin: 25px 0; text-align: center;">
