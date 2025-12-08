@@ -345,7 +345,7 @@ def display_jobs(jobs, user_skills):
         return
 
     for job in jobs:
-        # --- Skill matching ---
+        # --- Skill matching (unchanged) ---
         raw_text = (job.get("title", "") + " " + job.get("description", ""))
         text_to_search = clean_text(raw_text)
         matched_skills_in_job = list(dict.fromkeys([
@@ -353,118 +353,85 @@ def display_jobs(jobs, user_skills):
             if enhanced_normalize_skill(original_skill) in text_to_search
         ]))
 
-        if matched_skills_in_job:
-            skills_html = "".join(
-                f'<span class="skill-tag-match">{skill}</span>' for skill in matched_skills_in_job
-            )
-        else:
-            skills_html = '<span class="skill-tag-neutral">No direct skill matches found</span>'
+        skills_html = "".join(
+            f'<span class="skill-tag-match">{skill}</span>' for skill in matched_skills_in_job
+        ) if matched_skills_in_job else '<span class="skill-tag-neutral">No direct skill matches found</span>'
 
-        # --- Extract job data ---
-        company = job.get("company", {}).get("display_name", "Unknown Company")
-        location = job.get("location", {}).get("display_name", "Remote")
-        title = job.get("title", "No Title")
-        description = job.get("description", "No description available")
+        # --- Extract and SAFELY clean data ---
+        company = html.escape(job.get("company", {}).get("display_name", "Unknown Company"))
+        location = html.escape(job.get("location", {}).get("display_name", "Remote"))
+        title = html.escape(job.get("title", "No Title"))
 
-        # --- Clean the description: Remove HTML tags and truncate ---
-        import re
-        # Remove HTML tags
-        clean_description = re.sub(r'<[^>]+>', '', description)
-        # Truncate and escape for safety
-        clean_description = html.escape(clean_description[:240] + "...")
+        # Clean description: strip HTML tags + limit length
+        desc_raw = job.get("description", "No description available")
+        clean_desc = re.sub(r'<[^>]+>', '', desc_raw)  # Remove tags
+        clean_desc = html.escape(clean_desc)  # Critical: escape any remaining entities
+        clean_desc = clean_desc[:300] + "..." if len(clean_desc) > 300 else clean_desc
 
-        # Escape other text fields
-        safe_company = html.escape(company)
-        safe_location = html.escape(location)
-        safe_title = html.escape(title)
+        # --- Smart URL selection (with fallback) ---
+        adzuna_url = job.get("redirect_url", "") or job.get("adref", "")
+        if adzuna_url and not adzuna_url.startswith("http"):
+            adzuna_url = "https://" + adzuna_url.lstrip("/")
 
-        # --- URL handling: PRIORITIZE LinkedIn/Direct URLs ---
-        adzuna_url = job.get("redirect_url", "")
-        direct_url = job.get("adref", None)
+        # Try to extract a direct apply link if available
+        direct_url = None
+        if "apply" in job.get("adref", "") or "linkedin.com" in str(job.get("adref", "")).lower():
+            candidate = job.get("adref", "")
+            if candidate and len(candidate) > 10:
+                direct_url = candidate if candidate.startswith("http") else f"https://{candidate}"
 
-        # Default to Adzuna URL
-        final_url = adzuna_url
-        button_text = "Apply Now"
+        final_url = direct_url or adzuna_url or "#"
+        button_text = "Apply Now on LinkedIn" if direct_url and "linkedin" in final_url.lower() else "Apply Now"
 
-        # Check if there's a direct URL (like LinkedIn)
-        if direct_url and isinstance(direct_url, str) and len(direct_url) > 5:
-            # Clean and prepare the direct URL
-            if direct_url.startswith("http"):
-                direct_candidate = direct_url
-            else:
-                direct_candidate = f"https://{direct_url}"
-
-            # Check if it's a LinkedIn URL
-            if "linkedin.com" in direct_candidate.lower():
-                final_url = direct_candidate
-                button_text = "Apply Now on LinkedIn"
-            elif "naukri.com" in direct_candidate.lower():
-                final_url = direct_candidate
-                button_text = "Apply Now on Naukri"
-            elif any(dom in direct_candidate.lower() for dom in
-                     ["indeed.com", "greenhouse.io", "lever.co", "workday.com"]):
-                final_url = direct_candidate
-                button_text = "Apply Now (Direct Link)"
-
-        # Ensure URL has http/https prefix
-        if final_url and not final_url.startswith("http"):
-            final_url = f"https://{final_url}"
-        elif not final_url:
-            final_url = "#"
-
-        # Safe fallback URL (Adzuna)
-        safe_url = adzuna_url
-        if safe_url and not safe_url.startswith("http"):
-            safe_url = f"https://{safe_url}"
-
-        # --- Build the fallback link (only shown when we are using the direct link) ---
-        fallback_html = ""
-        # Show fallback only if we're using a direct URL (not Adzuna) AND Adzuna URL exists
-        if final_url != safe_url and safe_url and safe_url != "https://":
-            fallback_html = f'''
-            <div style="text-align: center; margin-top: 8px; font-size: 0.8em; opacity: 0.7;">
-                <a href="{safe_url}" target="_blank" rel="noopener" style="color: #88c0ff; text-decoration: underline;">
-                    Not working? Try safe link
-                </a>
-            </div>
-            '''
-
-        # --- Job card HTML ---
+        # --- FINAL SAFE HTML CARD (this is the key) ---
         job_card = f"""
         <div class="job-card-custom">
-            <h4 class="job-title">{safe_title}</h4>
-            <p class="job-company"><strong>{safe_company}</strong> • 📍 {safe_location}</p>
-            <p class="job-description">{clean_description}</p>
+            <h4 class="job-title">{title}</h4>
+            <p class="job-company"><strong>{company}</strong> • 📍 {location}</p>
+            <p class="job-description">{clean_desc}</p>
             <div class="job-skills"><strong>Matching Skills:</strong> {skills_html}</div>
 
-            <div style="margin: 25px 0; text-align: center;">
-                <a href="{final_url}" target="_blank" rel="noopener noreferrer" class="btn-apply-now">
+            <div style="margin: 30px 0; text-align: center;">
+                <a href="{final_url}" 
+                   target="_blank" 
+                   rel="noopener noreferrer" 
+                   class="btn-apply-now"
+                   onclick="return confirm('You are being redirected to an external site. Continue?')">
                     {button_text}
                 </a>
             </div>
 
-            {fallback_html}
-        </div>
-        <br>
-        """
+            {f'<div style="text-align:center; margin-top:10px; font-size:0.85em; opacity:0.7;">
+        < a
+        href = "{adzuna_url}"
+        target = "_blank"
+        style = "color:#88c0ff;" > Not
+        working? Try
+        backup
+        link < / a >
+    < / div > ' if direct_url and adzuna_url and direct_url != adzuna_url else ''}
+    < / div >
+    < br >
+    """
 
-        st.markdown(job_card, unsafe_allow_html=True)
+    # This is the MOST IMPORTANT line:
+    st.markdown(job_card, unsafe_allow_html=True)
 
 # --- Data & Model Loading ---
 @st.cache_data
 def load_data():
-    data = pd.read_csv("skillspread_dataset.csv")
-    job_roles_dataset = pd.read_csv("realistic_unique_job_roles_dataset.csv")
-    all_skills = set(job_roles_dataset["Skills"])
-    roles_from_data = sorted(data['job_role'].str.title().unique())
-    return data, all_skills, roles_from_data
+data = pd.read_csv("skillspread_dataset.csv")
+job_roles_dataset = pd.read_csv("realistic_unique_job_roles_dataset.csv")
+all_skills = set(job_roles_dataset["Skills"])
+roles_from_data = sorted(data['job_role'].str.title().unique())
+return data, all_skills, roles_from_data
 
 
 @st.cache_resource
 def load_models():
-    model = joblib.load("job_role_predictor.pkl")
-    vectorizer = joblib.load("skill_vectorizer.pkl")
-    return model, vectorizer, model.classes_
+model = joblib.load("job_role_predictor.pkl")
+vectorizer = joblib.load("skill_vectorizer.pkl")
+return model, vectorizer, model.classes_
 
 
 load_css()
@@ -475,13 +442,13 @@ model, vectorizer, job_roles = load_models()
 
 # --- UI: Input Form (Main Page) ---
 if not st.session_state.get("analysis_done", False):
-    try:
-        # Get the base64 string for the image
-        img_base64 = get_base64_of_bin_file("image.png")
+try:
+    # Get the base64 string for the image
+    img_base64 = get_base64_of_bin_file("image.png")
 
-        # Inject custom HTML and CSS to center the image.
-        st.markdown(
-            f"""
+    # Inject custom HTML and CSS to center the image.
+    st.markdown(
+        f"""
                 <div style="text-align: center; margin-bottom: 25px;">
                     <img src="data:image/png;base64,{img_base64}" width="300" 
                          style="display: block; margin: 0 auto;"/>
