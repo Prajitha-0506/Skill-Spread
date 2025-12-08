@@ -439,20 +439,20 @@ model, vectorizer, job_roles = load_models()
 
 # --- UI: Input Form (Main Page) ---
 if not st.session_state.get("analysis_done", False):
-try:
+    try:
     # Get the base64 string for the image
-    img_base64 = get_base64_of_bin_file("image.png")
+        img_base64 = get_base64_of_bin_file("image.png")
 
     # Inject custom HTML and CSS to center the image.
-    st.markdown(
-        f"""
-                <div style="text-align: center; margin-bottom: 25px;">
-                    <img src="data:image/png;base64,{img_base64}" width="300" 
-                         style="display: block; margin: 0 auto;"/>
-                </div>
-                """,
+        st.markdown(
+            f"""
+            <div style="text-align: center; margin-bottom: 25px;">
+            <img src="data:image/png;base64,{img_base64}" width="300"
+            style="display: block; margin: 0 auto;"/>
+            </div>
+    """,
             unsafe_allow_html=True
-        )
+            )
 
     except FileNotFoundError:
         st.error("Error: 'image.png' not found. Please make sure it's in the project folder.")
