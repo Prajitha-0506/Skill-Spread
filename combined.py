@@ -7,314 +7,86 @@ import json
 from thefuzz import fuzz, process
 import io
 import html
+import re
+import plotly.graph_objects as go
+from secrets_helper import load_secrets
 from code import fetch_jobs
 import google.generativeai as genai
 import random
-import re
-import plotly.graph_objects as go
-import plotly.graph_objects as go
-from secrets_helper import load_secrets
 
-# --- Page and State Setup ---
+# ========================= PAGE CONFIG =========================
 st.set_page_config(
     page_title="SkillSpread",
-    page_icon="🚀",
+    page_icon="rocket",
     layout="wide"
-    # REMOVED: theme="light" - this was causing the error
 )
 
-
-# --- CSS is embedded directly ---
+# ========================= FULL CSS =========================
 def load_css():
     css_styles = """
-
-    /* --- Import Google Font --- */
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
-    /* --- Sidebar Styling (Only shows after analysis) --- */
-    div[data-testid="stSidebar"] {
-        background: var(--secondary-background-color); /* FIXED: Uses dark theme variable */
-        border-right: 1px solid #e0e0e0;
-    }
+    div[data-testid="stSidebar"] {background: var(--secondary-background-color);}
+    h1, h2, h3, h4, h5, h6 {color: #E0E0E0 !important;}
+    div[data-testid="stSidebar"] h3 {font-size: 1.5rem !important; font-weight: 600 !important;}
 
-    /* --- Heading Fix (Make sure this rule is strong) --- */
-    h1, h2, h3, h4, h5, h6 {
-        color: #E0E0E0 !important; 
-    }
+    label[data-testid="stWidgetLabel"], div[data-testid="stSelectbox"] label {color: #2a7fff !important; font-weight: 500 !important;}
+    div[data-testid="stTextInput"] input, div[data-testid="stTextArea"] textarea {color: #E0E0E0 !important;}
+    div[data-testid="stSelectbox"] div[data-baseweb="select"] {color: #E0E0E0 !important;}
+    div[data-testid="stSelectbox"] div[data-baseweb="select"] > div > div {color: #E0E0E0 !important;}
+    div[data-testid="stSelectbox"] div[data-baseweb="select"] div[class*="placeholder"] {color: #B0B0B0 !important;}
 
-    /* ADD/ENSURE THIS: Target h3 specifically in the sidebar */
-    div[data-testid="stSidebar"] h3 {
-        font-size: 1.5rem !important; /* Force the size on the header */
-        font-weight: 600 !important;
-    }
+    button[data-baseweb="tab"] div[data-testid="stMarkdownContainer"] p {color: #E0E0E0 !important;}
 
+    .skill-chip-container {display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;}
+    .skill-chip {padding: 6px 14px; border-radius: 16px; font-size: 0.9rem; font-weight: 500;}
+    .skill-chip-success {background-color: #e6f7f0; color: #0d683f; border: 1px solid #b7e4cf;}
+    .skill-chip-error {background-color: #fdecea; color: #a91e2c; border: 1px solid #f8c9c7;}
+    .skill-chip-info {background-color: #fff3e0; color: #e65100; border: 1px solid #ffe0b2;}
 
-    /* --- Widget Styling (FIXED for DARK text) --- */
-
-    /* Labels for all widgets */
-    label[data-testid="stWidgetLabel"],
-    div[data-testid="stSelectbox"] label {
-        color: #2a7fff !important; /* Vibrant Blue label (Kept as accent) */
-        font-weight: 500 !important;
-    }
-
-    /* --- This is the fix for DARK text in all inputs --- */
-
-    /* Text inside "Your Name" box */
-    div[data-testid="stTextInput"] input {
-        color: #E0E0E0 !important; /* FIXED for Dark Theme */
-    }
-    /* Text inside "Your Skills" box */
-    div[data-testid="stTextArea"] textarea {
-        color: #E0E0E0 !important; /* FIXED for Dark Theme */
-    }
-
-    /* Text inside "Select a Role" box */
-    div[data-testid="stSelectbox"] div[data-baseweb="select"] {
-        color: #E0E0E0 !important; /* FIXED for Dark Theme */
-    }
-    div[data-testid="stSelectbox"] div[data-baseweb="select"] > div > div {
-        color: #E0E0E0 !important; /* FIXED for Dark Theme */
-    }
-    /* Fix for the "Select a Role" placeholder */
-    div[data-testid="stSelectbox"] div[data-baseweb="select"] div[class*="placeholder"] {
-         color: #B0B0B0 !important; /* Adjusted for dark background */
-    }
-    /* --- End of Widget Styling Fix --- */
-
-    /* --- Fix for Text in Tabs --- */
-    button[data-baseweb="tab"] div[data-testid="stMarkdownContainer"] p {
-        color: #E0E0E0 !important; 
-    }
-    /* --- End of Tab Fix --- */
-
-
-    /* --- Skill Chip Styling --- */
-    .skill-chip-container {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-top: 10px;
-    }
-    .skill-chip {
-        display: inline-block;
-        padding: 6px 14px;
-        border-radius: 16px;
-        font-size: 0.9rem;
-        font-weight: 500;
-    }
-    .skill-chip-success {
-        background-color: #e6f7f0;
-        color: #0d683f;
-        border: 1px solid #b7e4cf;
-    }
-    .skill-chip-error {
-        background-color: #fdecea;
-        color: #a91e2c;
-        border: 1px solid #f8c9c7;
-    }
-    .skill-chip-info {
-        background-color: #fff3e0;
-        color: #e65100;
-        border: 1px solid #ffe0b2;
-    }
-
-    /* --- Job Card Styling --- */
     .job-card-custom {
-        background: #1e2a38;
-        border: 1px solid #444;
-        border-radius: 16px;
-        padding: 20px;
-        margin: 20px 0;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-        transition: all 0.3s ease;
+        background: #1e2a38; border: 1px solid #444; border-radius: 16px; padding: 20px; margin: 20px 0;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.4); transition: all 0.3s ease;
     }
-    .job-card-custom:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 12px 30px rgba(42,127,255,0.25);
-        border-color: #2a7fff;
-    }
-    .job-title {
-        margin: 0 0 5px 0;
-        color: #E0E0E0; /* FIXED for Dark Theme */
-    }
-    .job-company {
-        margin: 3px 0;
-        color: #B0B0B0; /* Adjusted for dark background */
-        font-size: 1rem;
-    }
-    .job-description {
-        margin: 10px 0;
-        color: #B0B0B0; /* Adjusted for dark background */
-        font-size: 0.95rem;
-    }
-    .job-skills {
-        margin: 10px 0;
-    }
-    .skill-tag-match {
-        background-color: #e7f3ff;
-        color: #0063f7;
-        padding: 4px 10px;
-        border-radius: 16px;
-        font-size: 0.8rem;
-        font-weight: 500;
-        margin: 2px;
-    }
-    .skill-tag-neutral {
-        background-color: #f0f0f0;
-        color: #555;
-        padding: 4px 10px;
-        border-radius: 16px;
-        font-size: 0.8rem;
-        font-weight: 500;
-        margin: 2px;
-    }
-    
-    /* BIG APPLY NOW BUTTON - HIGH VISIBILITY */
+    .job-card-custom:hover {transform: translateY(-5px); box-shadow: 0 12px 30px rgba(42,127,255,0.25); border-color: #2a7fff;}
+    .job-title, .job-company, .job-description {color: #E0E0E0 !important;}
+    .job-company {color: #B0B0B0 !important;}
+    .job-description {color: #B0B0B0 !important;}
+
+    .skill-tag-match {background-color: #e7f3ff; color: #0063f7; padding: 4px 10px; border-radius: 16px; font-size: 0.8rem; margin: 2px;}
+    .skill-tag-neutral {background-color: #f0f0f0; color: #555; padding: 4px 10px; border-radius: 16px; font-size: 0.8rem; margin: 2px;}
+
     .btn-apply-now {
-        display: inline-block !important;
-        padding: 14px 36px !important;
+        display: inline-block !important; padding: 14px 36px !important;
         background: linear-gradient(135deg, #2a7fff, #1a6de6) !important;
-        color: white !important;
-        font-size: 1.1rem !important;
-        font-weight: 700 !important;
-        text-decoration: none !important;
-        border-radius: 12px !important;
-        box-shadow: 0 6px 20px rgba(42,127,255,0.4) !important;
-        transition: all 0.3s ease !important;
+        color: white !important; font-size: 1.1rem !important; font-weight: 700 !important;
+        text-decoration: none !important; border-radius: 12px !important;
+        box-shadow: 0 6px 20px rgba(42,127,255,0.4) !important; transition: all 0.3s ease !important;
     }
-    .btn-apply-now:hover {
-        transform: translateY(-4px) !important;
-        box-shadow: 0 12px 30px rgba(42,127,255,0.6) !important;
-    }
-    .btn-apply-now:active {
-        transform: translateY(-1px) !important;
-    }
-    
-
-    /* --- Chat Styling --- */
-    [data-testid="stChatMessage"] {
-        border-radius: 12px;
-        padding: 12px;
-        background-color: var(--secondary-background-color) !important; /* FIXED: Uses dark theme variable */
-        border: 1px solid #e0e0e0;
-    }
-
-    /* --- DEFINITIVE FIXED CHAT INPUT POSITION --- */
-    /* Targets the footer element where Streamlit places st.chat_input */
-    footer {
-        position: fixed !important;
-        bottom: 0 !important;
-        left: 0;
-        /* Calculate width: 100% of viewport minus the sidebar width (300px is Streamlit's default) */
-        width: calc(100% - 300px) !important; 
-        z-index: 9999; 
-        background-color: var(--secondary-background-color); 
-        padding-bottom: 10px;
-    }
-
-    /* Adjust padding to account for the sidebar offset */
-    section[data-testid="stSidebar"] + div > footer {
-        left: 300px; /* Aligns the footer to the main content area */
-        width: calc(100% - 300px) !important;
-    }
-
-    /* Target the chat input itself for internal padding/styling */
-    div[data-testid="stChatInput"] {
-        background-color: var(--background-color); 
-        padding: 10px 1rem 10px 1rem;
-        box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.2);
-    }
-    /* --- End DEFINITIVE FIXED CHAT INPUT POSITION --- */
-
-    /* --- ULTIMATE FLICKER FIX --- */
-    /* This targets the main content body and forces it to hide immediately 
-       when Streamlit adds the 'stApp-loading' class (during a page transition). */
-    .stApp.stApp-loading > div[data-testid="stAppViewContainer"] > .main {
-        opacity: 0 !important;
-        visibility: hidden !important;
-    }
-
-    /* Ensure the main page area always uses your theme background color */
-    div[data-testid="stAppViewContainer"] {
-        background-color: var(--background-color) !important;
-    }
-    /* --- End ULTIMATE FLICKER FIX --- */
-
-    /* Final successful fix concept: High specificity and deep nesting */
-    div[data-testid="stSidebar"] div[data-testid*="stBlock"] > div > div > div > p {
-        font-size: 1.25rem !important; 
-    }
-
+    .btn-apply-now:hover {transform: translateY(-4px) !important; box-shadow: 0 12px 30px rgba(42,127,255,0.6) !important;}
     """
     st.markdown(f"<style>{css_styles}</style>", unsafe_allow_html=True)
 
-
-# --- Helper, GenAI, and Skill Processing Functions ---
+# ========================= HELPERS =========================
 def get_base64_of_bin_file(bin_file):
     try:
         with open(bin_file, 'rb') as f:
-            data = f.read()
-        return base64.b64encode(data).decode()
-    except FileNotFoundError:
+            return base64.b64encode(f.read()).decode()
+    except:
         return None
-
-
-def create_prompt(skills, job_description):
-    # Modified prompt for conciseness
-    return f"""As an expert career coach, based on these skills: {skills} and this job description: {job_description}, write 3-5 powerful, highly concise resume bullet points starting with action verbs. Focus on matching the user's skills to the job requirements without inventing skills. Format them as a bulleted list."""
-
-
-def generate_response(prompt):
-    try:
-        # FIX: Access key via the "api" section, not a non-existent "gemini" section.
-        genai.configure(api_key=st.secrets["api"]["gemini_api_key"])
-        model = genai.GenerativeModel('models/gemini-pro-latest')
-
-        # CRITICAL FIX: Use streaming to reduce perceived latency
-        response_stream = model.generate_content(prompt, stream=True)
-
-        # Return the stream object
-        return response_stream
-
-    except Exception as e:
-        # This catch is good, but the key error makes the traceback misleading
-        st.error(f"An error occurred with the AI model: {e}")
-        return None
-
-# Helper function to display skills as styled chips
-def display_skill_chips(skills, skill_type):
-    if not skills:
-        return
-
-    type_map = {
-        "success": "Skills you have:",
-        "error": "Core skills to learn:",
-        "info": "Optional skills to explore:"
-    }
-
-    st.markdown(f"**{type_map.get(skill_type, 'Skills:')}**")
-
-    chips_html = "".join([f'<span class="skill-chip skill-chip-{skill_type}">{skill}</span>' for skill in skills])
-    st.markdown(f'<div class="skill-chip-container">{chips_html}</div>', unsafe_allow_html=True)
-
-
-def fuzzy_match(skill, skill_list, threshold=65):
-    if not skill or not skill_list:
-        return None
-    match, score = process.extractOne(skill, skill_list, scorer=fuzz.token_set_ratio)
-    return match if score >= threshold else None
-
 
 def clean_text(text):
-    if not text:
-        return ""
+    if not text: return ""
     text = text.lower()
     text = re.sub(r"[/\-_+]", " ", text)
     text = re.sub(r"[^\w\s]", " ", text)
     text = re.sub(r"\s+", " ", text).strip()
     return text
 
+def fuzzy_match(skill, skill_list, threshold=65):
+    if not skill or not skill_list: return None
+    match, score = process.extractOne(skill, skill_list, scorer=fuzz.token_set_ratio)
+    return match if score >= threshold else None
 
 enhanced_skill_normalizer = {
     "powerbi": "power bi", "power-bi": "power bi", "ml": "machine learning", "ai": "artificial intelligence",
@@ -322,99 +94,79 @@ enhanced_skill_normalizer = {
     "angularjs": "angular", "css3": "css", "html5": "html", "aws": "amazon web services", "gcp": "google cloud platform"
 }
 
-
 def enhanced_normalize_skill(skill):
-    clean_skill = skill.lower().strip()
-    return enhanced_skill_normalizer.get(clean_skill, clean_skill)
+    return enhanced_skill_normalizer.get(skill.lower().strip(), skill.lower().strip())
 
-# Initialize session state variables
-if "analysis_done" not in st.session_state:
-    st.session_state["analysis_done"] = False
-if "generated_points" not in st.session_state:
-    st.session_state["generated_points"] = None
-if "chat_messages" not in st.session_state:
-    st.session_state["chat_messages"] = [
-        {"role": "assistant",
-         "content": "Hi! I'm your AI Career Mentor 🤖. Ask me about learning roadmaps, skill gaps, or project ideas!"}
-    ]
+def display_skill_chips(skills, skill_type):
+    if not skills: return
+    type_map = {"success": "Skills you have:", "error": "Core skills to learn:", "info": "Optional skills to explore:"}
+    st.markdown(f"**{type_map.get(skill_type, 'Skills:')}**")
+    chips_html = "".join([f'<span class="skill-chip skill-chip-{skill_type}">{skill}</span>' for skill in skills])
+    st.markdown(f'<div class="skill-chip-container">{chips_html}</div>', unsafe_allow_html=True)
 
+def create_prompt(skills, job_description):
+    return f"""As an expert career coach, based on these skills: {skills} and this job description: {job_description}, write 3-5 powerful, highly concise resume bullet points starting with action verbs. Focus on matching the user's skills to the job requirements without inventing skills. Format them as a bulleted list."""
 
+def generate_response(prompt):
+    try:
+        genai.configure(api_key=st.secrets["api"]["gemini_api_key"])
+        model = genai.GenerativeModel('models/gemini-pro-latest')
+        response_stream = model.generate_content(prompt, stream=True)
+        return response_stream
+    except Exception as e:
+        st.error(f"AI Error: {e}")
+        return None
+
+# ========================= FIXED DISPLAY_JOBS =========================
 def display_jobs(jobs, user_skills):
     if not user_skills:
         st.info("No skills provided to match against job descriptions.")
         return
 
     for job in jobs:
-        # --- Skill matching ---
         raw_text = (job.get("title", "") + " " + job.get("description", ""))
         text_to_search = clean_text(raw_text)
         matched_skills_in_job = list(dict.fromkeys([
-            original_skill for original_skill in user_skills
-            if enhanced_normalize_skill(original_skill) in text_to_search
+            s for s in user_skills if enhanced_normalize_skill(s) in text_to_search
         ]))
 
-        skills_html = "".join(
-            f'<span class="skill-tag-match">{skill}</span>' for skill in matched_skills_in_job
-        ) if matched_skills_in_job else '<span class="skill-tag-neutral">No direct skill matches found</span>'
+        skills_html = "".join(f'<span class="skill-tag-match">{s}</span>' for s in matched_skills_in_job) if matched_skills_in_job else '<span class="skill-tag-neutral">No direct skill matches found</span>'
 
-        # --- Safely extract and clean data ---
         company = html.escape(job.get("company", {}).get("display_name", "Unknown Company"))
         location = html.escape(job.get("location", {}).get("display_name", "Remote"))
         title = html.escape(job.get("title", "No Title"))
+        desc = html.escape(re.sub(r'<[^>]+>', '', job.get("description", ""))[:300] + "...")
 
-        desc_raw = job.get("description", "No description available")
-        clean_desc = re.sub(r'<[^>]+>', '', desc_raw)
-        clean_desc = html.escape(clean_desc)[:300] + "..." if len(clean_desc) > 300 else html.escape(clean_desc)
-
-        # --- URL logic ---
         adzuna_url = job.get("redirect_url", "") or job.get("adref", "")
         if adzuna_url and not adzuna_url.startswith("http"):
             adzuna_url = "https://" + adzuna_url.lstrip("/")
 
         direct_url = None
-        adref = job.get("adref", "")
-        if adref and ("linkedin.com" in adref.lower() or "apply" in adref.lower()):
-            direct_url = adref if adref.startswith("http") else f"https://{adref}"
+        if "linkedin.com" in str(job.get("adref", "")).lower():
+            direct_url = job.get("adref", "")
+            if not direct_url.startswith("http"):
+                direct_url = "https://" + direct_url
 
         final_url = direct_url or adzuna_url or "#"
-        button_text = "Apply Now on LinkedIn" if direct_url and "linkedin" in final_url.lower() else "Apply Now"
+        button_text = "Apply Now on LinkedIn" if direct_url else "Apply Now"
 
-        # --- Build fallback link HTML (only if we have both URLs) ---
-        fallback_html = ""
-        if direct_url and adzuna_url and direct_url != adzuna_url:
-            fallback_html = f'''
-            <div style="text-align:center; margin-top:10px; font-size:0.85em; opacity:0.7;">
-                <a href="{adzuna_url}" target="_blank" rel="noopener noreferrer" style="color:#88c0ff; text-decoration:underline;">
-                    Not working? Try backup link
-                </a>
-            </div>
-            '''
+        fallback = f'<div style="text-align:center; margin-top:10px; font-size:0.85em; opacity:0.7;"><a href="{adzuna_url}" target="_blank" style="color:#88c0ff; text-decoration:underline;">Not working? Try backup link</a></div>' if direct_url and direct_url != adzuna_url else ""
 
-        # --- Final Job Card (NOW FULLY VALID) ---
         job_card = f"""
         <div class="job-card-custom">
             <h4 class="job-title">{title}</h4>
-            <p class="job-company"><strong>{company}</strong> • 📍 {location}</p>
-            <p class="job-description">{clean_desc}</p>
+            <p class="job-company"><strong>{company}</strong> • {location}</p>
+            <p class="job-description">{desc}</p>
             <div class="job-skills"><strong>Matching Skills:</strong> {skills_html}</div>
-
             <div style="margin: 30px 0; text-align: center;">
-                <a href="{final_url}" 
-                   target="_blank" 
-                   rel="noopener noreferrer" 
-                   class="btn-apply-now">
-                    {button_text}
-                </a>
+                <a href="{final_url}" target="_blank" rel="noopener noreferrer" class="btn-apply-now">{button_text}</a>
             </div>
-
-            {fallback_html}
-        </div>
-        <br>
+            {fallback}
+        </div><br>
         """
-
         st.markdown(job_card, unsafe_allow_html=True)
 
-# --- Data & Model Loading ---
+# ========================= DATA & MODELS =========================
 @st.cache_data
 def load_data():
     data = pd.read_csv("skillspread_dataset.csv")
@@ -423,42 +175,21 @@ def load_data():
     roles_from_data = sorted(data['job_role'].str.title().unique())
     return data, all_skills, roles_from_data
 
-
 @st.cache_resource
 def load_models():
     model = joblib.load("job_role_predictor.pkl")
     vectorizer = joblib.load("skill_vectorizer.pkl")
     return model, vectorizer, model.classes_
 
-
 load_css()
-
-
 data, all_skills, roles_from_data = load_data()
 model, vectorizer, job_roles = load_models()
 
-# --- UI: Input Form (Main Page) ---
-if not st.session_state.get("analysis_done", False):
-    try:
-    # Get the base64 string for the image
-        img_base64 = get_base64_of_bin_file("image.png")
-
-    # Inject custom HTML and CSS to center the image.
-        st.markdown(
-            f"""
-            <div style="text-align: center; margin-bottom: 25px;">
-            <img src="data:image/png;base64,{img_base64}" width="300"
-            style="display: block; margin: 0 auto;"/>
-            </div>
-    """,
-            unsafe_allow_html=True
-            )
-
-    except FileNotFoundError:
-        st.error("Error: 'image.png' not found. Please make sure it's in the project folder.")
-    except Exception as e:
-        # Handle case where base64 conversion fails (e.g., file not found)
-        st.error(f"Error displaying logo: {e}")
+# ========================= SESSION STATE =========================
+if "analysis_done" not in st.session_state:
+    st.session_state.analysis_done = False
+if "chat_messages" not in st.session_state:
+    st.session_state.chat_messages = [{"role": "assistant", "content": "Hi! I'm your AI Career Mentor. Ask me about learning roadmaps, skill gaps, or project ideas!"}]
 
     with st.container():
         st.markdown("👋 Welcome! Let's get started by analyzing your skills against your desired job role.")
