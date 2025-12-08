@@ -417,18 +417,18 @@ def display_jobs(jobs, user_skills):
 # --- Data & Model Loading ---
 @st.cache_data
 def load_data():
-data = pd.read_csv("skillspread_dataset.csv")
-job_roles_dataset = pd.read_csv("realistic_unique_job_roles_dataset.csv")
-all_skills = set(job_roles_dataset["Skills"])
-roles_from_data = sorted(data['job_role'].str.title().unique())
-return data, all_skills, roles_from_data
+    data = pd.read_csv("skillspread_dataset.csv")
+    job_roles_dataset = pd.read_csv("realistic_unique_job_roles_dataset.csv")
+    all_skills = set(job_roles_dataset["Skills"])
+    roles_from_data = sorted(data['job_role'].str.title().unique())
+    return data, all_skills, roles_from_data
 
 
 @st.cache_resource
 def load_models():
-model = joblib.load("job_role_predictor.pkl")
-vectorizer = joblib.load("skill_vectorizer.pkl")
-return model, vectorizer, model.classes_
+    model = joblib.load("job_role_predictor.pkl")
+    vectorizer = joblib.load("skill_vectorizer.pkl")
+    return model, vectorizer, model.classes_
 
 
 load_css()
