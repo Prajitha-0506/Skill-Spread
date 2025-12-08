@@ -27,227 +27,163 @@ st.set_page_config(
 # --- CSS is embedded directly ---
 def load_css():
     css_styles = """
-
-    /* --- Import Google Font --- */
+    <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
-    /* --- Sidebar Styling (Only shows after analysis) --- */
+    /* Global Font & Smooth Scroll */
+    body, .stApp {
+        font-family: 'Poppins', sans-serif !important;
+        scroll-behavior: smooth;
+    }
+
+    /* Main Container Polish */
+    .main .block-container {
+        max-width: 1400px;
+        padding-top: 2rem;
+        padding-bottom: 4rem;
+    }
+
+    /* Headings - Strong Hierarchy */
+    h1 { font-size: 2.8rem !important; font-weight: 700 !important; margin-bottom: 1rem; }
+    h2 { font-size: 2.2rem !important; font-weight: 600 !important; }
+    h3 { font-size: 1.7rem !important; font-weight: 600 !important; color: #E0E0E0 !important; }
+    h4 { font-size: 1.4rem !important; font-weight: 600 !important; }
+
+    /* Sidebar - Modern Look */
     div[data-testid="stSidebar"] {
-        background: var(--secondary-background-color); /* FIXED: Uses dark theme variable */
-        border-right: 1px solid #e0e0e0;
+        background: #0f1b2a;
+        border-right: 1px solid #2a3b55;
+        box-shadow: 4px 0 20px rgba(0,0,0,0.3);
     }
+    .css-1d391kg { padding: 1.5rem 1rem; } /* Sidebar header spacing */
+    .sidebar .sidebar-content { padding-top: 1rem; }
 
-    /* --- Heading Fix (Make sure this rule is strong) --- */
-    h1, h2, h3, h4, h5, h6 {
-        color: #E0E0E0 !important; 
-    }
-
-    /* ADD/ENSURE THIS: Target h3 specifically in the sidebar */
-    div[data-testid="stSidebar"] h3 {
-        font-size: 1.5rem !important; /* Force the size on the header */
-        font-weight: 600 !important;
-    }
-
-
-    /* --- Widget Styling (FIXED for DARK text) --- */
-
-    /* Labels for all widgets */
-    label[data-testid="stWidgetLabel"],
-    div[data-testid="stSelectbox"] label {
-        color: #2a7fff !important; /* Vibrant Blue label (Kept as accent) */
-        font-weight: 500 !important;
-    }
-
-    /* --- This is the fix for DARK text in all inputs --- */
-
-    /* Text inside "Your Name" box */
-    div[data-testid="stTextInput"] input {
-        color: #E0E0E0 !important; /* FIXED for Dark Theme */
-    }
-    /* Text inside "Your Skills" box */
-    div[data-testid="stTextArea"] textarea {
-        color: #E0E0E0 !important; /* FIXED for Dark Theme */
-    }
-
-    /* Text inside "Select a Role" box */
-    div[data-testid="stSelectbox"] div[data-baseweb="select"] {
-        color: #E0E0E0 !important; /* FIXED for Dark Theme */
-    }
-    div[data-testid="stSelectbox"] div[data-baseweb="select"] > div > div {
-        color: #E0E0E0 !important; /* FIXED for Dark Theme */
-    }
-    /* Fix for the "Select a Role" placeholder */
-    div[data-testid="stSelectbox"] div[data-baseweb="select"] div[class*="placeholder"] {
-         color: #B0B0B0 !important; /* Adjusted for dark background */
-    }
-    /* --- End of Widget Styling Fix --- */
-
-    /* --- Fix for Text in Tabs --- */
-    button[data-baseweb="tab"] div[data-testid="stMarkdownContainer"] p {
-        color: #E0E0E0 !important; 
-    }
-    /* --- End of Tab Fix --- */
-
-
-    /* --- Skill Chip Styling --- */
-    .skill-chip-container {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-top: 10px;
-    }
-    .skill-chip {
-        display: inline-block;
-        padding: 6px 14px;
-        border-radius: 16px;
-        font-size: 0.9rem;
-        font-weight: 500;
-    }
-    .skill-chip-success {
-        background-color: #e6f7f0;
-        color: #0d683f;
-        border: 1px solid #b7e4cf;
-    }
-    .skill-chip-error {
-        background-color: #fdecea;
-        color: #a91e2c;
-        border: 1px solid #f8c9c7;
-    }
-    .skill-chip-info {
-        background-color: #fff3e0;
-        color: #e65100;
-        border: 1px solid #ffe0b2;
-    }
-
-    /* --- Job Card Styling --- */
-    .job-card-custom {
-        background: #1e2a38;
-        border: 1px solid #444;
-        border-radius: 16px;
-        padding: 20px;
-        margin: 20px 0;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    /* Input Form - Floating Labels & Better Look */
+    div[data-testid="stTextInput"] > div > div > input,
+    div[data-testid="stTextArea"] > div > div > textarea {
+        background-color: #1e2a38 !important;
+        border: 1.5px solid #2a7fff !important;
+        border-radius: 12px !important;
+        padding: 14px !important;
         transition: all 0.3s ease;
     }
-    .job-card-custom:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 12px 30px rgba(42,127,255,0.25);
-        border-color: #2a7fff;
-    }
-    .job-title {
-        margin: 0 0 5px 0;
-        color: #E0E0E0; /* FIXED for Dark Theme */
-    }
-    .job-company {
-        margin: 3px 0;
-        color: #B0B0B0; /* Adjusted for dark background */
-        font-size: 1rem;
-    }
-    .job-description {
-        margin: 10px 0;
-        color: #B0B0B0; /* Adjusted for dark background */
-        font-size: 0.95rem;
-    }
-    .job-skills {
-        margin: 10px 0;
-    }
-    .skill-tag-match {
-        background-color: #e7f3ff;
-        color: #0063f7;
-        padding: 4px 10px;
-        border-radius: 16px;
-        font-size: 0.8rem;
-        font-weight: 500;
-        margin: 2px;
-    }
-    .skill-tag-neutral {
-        background-color: #f0f0f0;
-        color: #555;
-        padding: 4px 10px;
-        border-radius: 16px;
-        font-size: 0.8rem;
-        font-weight: 500;
-        margin: 2px;
+    div[data-testid="stTextInput"] > div > div > input:focus,
+    div[data-testid="stTextArea"] > div > div > textarea:focus {
+        box-shadow: 0 0 0 3px rgba(42, 127, 255, 0.3) !important;
+        transform: translateY(-2px);
     }
 
-    /* BIG APPLY NOW BUTTON - HIGH VISIBILITY */
-    .btn-apply-now {
-        display: inline-block !important;
-        padding: 14px 36px !important;
-        background: linear-gradient(135deg, #2a7fff, #1a6de6) !important;
-        color: white !important;
-        font-size: 1.1rem !important;
-        font-weight: 700 !important;
-        text-decoration: none !important;
+    /* Selectbox - Modern Dropdown */
+    div[data-baseweb="select"] > div {
+        background-color: #1e2a38 !important;
+        border: 1.5px solid #2a7fff !important;
         border-radius: 12px !important;
+        color: #E0E0E0 !important;
+    }
+
+    /* Primary Button - Glow Effect */
+    .stButton > button {
+        background: linear-gradient(135deg, #2a7fff, #1a6de6) !important;
+        border: none !important;
+        border-radius: 12px !important;
+        padding: 12px 24px !important;
+        font-weight: 600 !important;
         box-shadow: 0 6px 20px rgba(42,127,255,0.4) !important;
         transition: all 0.3s ease !important;
     }
-    .btn-apply-now:hover {
+    .stButton > button:hover {
         transform: translateY(-4px) !important;
         box-shadow: 0 12px 30px rgba(42,127,255,0.6) !important;
     }
-    .btn-apply-now:active {
-        transform: translateY(-1px) !important;
+
+    /* Skill Chips - Elevated */
+    .skill-chip {
+        padding: 8px 16px !important;
+        border-radius: 20px !important;
+        font-weight: 600 !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        transition: transform 0.2s ease;
+    }
+    .skill-chip:hover {
+        transform: translateY(-2px);
     }
 
+    /* Job Cards - Premium Feel */
+    .job-card-custom {
+        background: linear-gradient(145deg, #1e2a38, #16222f) !important;
+        border: 1.5px solid #2a7fff !important;
+        border-radius: 20px !important;
+        padding: 24px !important;
+        margin: 20px 0;
+        box-shadow: 0 10px 30px rgba(42,127,255,0.15) !important;
+        transition: all 0.4s ease;
+    }
+    .job-card-custom:hover {
+        transform: translateY(-10px) !important;
+        box-shadow: 0 20px 40px rgba(42,127,255,0.3) !important;
+        border-color: #5a9fff !important;
+    }
 
-    /* --- Chat Styling --- */
+    /* Apply Button - Hero Level */
+    .btn-apply-now {
+        background: linear-gradient(135deg, #2a7fff, #1a6de6) !important;
+        padding: 16px 40px !important;
+        border-radius: 16px !important;
+        font-size: 1.2rem !important;
+        font-weight: 700 !important;
+        box-shadow: 0 8px 25px rgba(42,127,255,0.5) !important;
+        transition: all 0.3s ease !important;
+    }
+    .btn-apply-now:hover {
+        transform: translateY(-6px) !important;
+        box-shadow: 0 16px 40px rgba(42,127,255,0.7) !important;
+    }
+
+    /* Donut Chart - Gradient Ring */
+    .js-plotly-plot .plotly .main-svg {
+        filter: drop-shadow(0 0 20px rgba(42,127,255,0.3));
+    }
+
+    /* Chat Messages - Card Style */
     [data-testid="stChatMessage"] {
-        border-radius: 12px;
-        padding: 12px;
-        background-color: var(--secondary-background-color) !important; /* FIXED: Uses dark theme variable */
-        border: 1px solid #e0e0e0;
+        border-radius: 16px !important;
+        padding: 16px !important;
+        margin: 10px 0;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        border: 1px solid #2a7fff33;
     }
 
-    /* --- DEFINITIVE FIXED CHAT INPUT POSITION --- */
-    /* Targets the footer element where Streamlit places st.chat_input */
-    footer {
-        position: fixed !important;
-        bottom: 0 !important;
-        left: 0;
-        /* Calculate width: 100% of viewport minus the sidebar width (300px is Streamlit's default) */
-        width: calc(100% - 300px) !important; 
-        z-index: 9999; 
-        background-color: var(--secondary-background-color); 
-        padding-bottom: 10px;
-    }
-
-    /* Adjust padding to account for the sidebar offset */
-    section[data-testid="stSidebar"] + div > footer {
-        left: 300px; /* Aligns the footer to the main content area */
-        width: calc(100% - 300px) !important;
-    }
-
-    /* Target the chat input itself for internal padding/styling */
+    /* Fixed Chat Input at Bottom */
+    footer { visibility: hidden; }
     div[data-testid="stChatInput"] {
-        background-color: var(--background-color); 
-        padding: 10px 1rem 10px 1rem;
-        box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.2);
-    }
-    /* --- End DEFINITIVE FIXED CHAT INPUT POSITION --- */
-
-    /* --- ULTIMATE FLICKER FIX --- */
-    /* This targets the main content body and forces it to hide immediately 
-       when Streamlit adds the 'stApp-loading' class (during a page transition). */
-    .stApp.stApp-loading > div[data-testid="stAppViewContainer"] > .main {
-        opacity: 0 !important;
-        visibility: hidden !important;
+        position: fixed;
+        bottom: 0;
+        left: 300px;
+        right: 0;
+        background: #0f1b2a;
+        padding: 1rem;
+        border-top: 1px solid #2a7fff;
+        z-index: 9999;
+        box-shadow: 0 -5px 20px rgba(0,0,0,0.4);
     }
 
-    /* Ensure the main page area always uses your theme background color */
-    div[data-testid="stAppViewContainer"] {
-        background-color: var(--background-color) !important;
+    /* Responsive */
+    @media (max-width: 768px) {
+        div[data-testid="stChatInput"] { left: 0; }
+        .main .block-container { padding: 1rem; }
     }
-    /* --- End ULTIMATE FLICKER FIX --- */
-
-    /* Final successful fix concept: High specificity and deep nesting */
-    div[data-testid="stSidebar"] div[data-testid*="stBlock"] > div > div > div > p {
-        font-size: 1.25rem !important; 
-    }
-
+    </style>
     """
-    st.markdown(f"<style>{css_styles}</style>", unsafe_allow_html=True)
+    st.markdown("""
+        <div style="text-align: center; padding: 3rem 0 2rem;">
+            <h1 style="font-size: 3.5rem; background: linear-gradient(90deg, #2a7fff, #00d4ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                SkillSpread Pro
+            </h1>
+            <p style="font-size: 1.3rem; color: #B0B0B0; margin-top: 1rem;">
+                Get hired faster with AI-powered skill matching
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
 
 
 # --- Helper, GenAI, and Skill Processing Functions ---
