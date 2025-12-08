@@ -345,7 +345,7 @@ def display_jobs(jobs, user_skills):
         return
 
     for job in jobs:
-        # --- Skill matching (unchanged) ---
+        # --- Skill matching ---
         raw_text = (job.get("title", "") + " " + job.get("description", ""))
         text_to_search = clean_text(raw_text)
         matched_skills_in_job = list(dict.fromkeys([
@@ -357,33 +357,40 @@ def display_jobs(jobs, user_skills):
             f'<span class="skill-tag-match">{skill}</span>' for skill in matched_skills_in_job
         ) if matched_skills_in_job else '<span class="skill-tag-neutral">No direct skill matches found</span>'
 
-        # --- Extract and SAFELY clean data ---
+        # --- Safely extract and clean data ---
         company = html.escape(job.get("company", {}).get("display_name", "Unknown Company"))
         location = html.escape(job.get("location", {}).get("display_name", "Remote"))
         title = html.escape(job.get("title", "No Title"))
 
-        # Clean description: strip HTML tags + limit length
         desc_raw = job.get("description", "No description available")
-        clean_desc = re.sub(r'<[^>]+>', '', desc_raw)  # Remove tags
-        clean_desc = html.escape(clean_desc)  # Critical: escape any remaining entities
-        clean_desc = clean_desc[:300] + "..." if len(clean_desc) > 300 else clean_desc
+        clean_desc = re.sub(r'<[^>]+>', '', desc_raw)
+        clean_desc = html.escape(clean_desc)[:300] + "..." if len(clean_desc) > 300 else html.escape(clean_desc)
 
-        # --- Smart URL selection (with fallback) ---
+        # --- URL logic ---
         adzuna_url = job.get("redirect_url", "") or job.get("adref", "")
         if adzuna_url and not adzuna_url.startswith("http"):
             adzuna_url = "https://" + adzuna_url.lstrip("/")
 
-        # Try to extract a direct apply link if available
         direct_url = None
-        if "apply" in job.get("adref", "") or "linkedin.com" in str(job.get("adref", "")).lower():
-            candidate = job.get("adref", "")
-            if candidate and len(candidate) > 10:
-                direct_url = candidate if candidate.startswith("http") else f"https://{candidate}"
+        adref = job.get("adref", "")
+        if adref and ("linkedin.com" in adref.lower() or "apply" in adref.lower()):
+            direct_url = adref if adref.startswith("http") else f"https://{adref}"
 
         final_url = direct_url or adzuna_url or "#"
         button_text = "Apply Now on LinkedIn" if direct_url and "linkedin" in final_url.lower() else "Apply Now"
 
-        # --- FINAL SAFE HTML CARD (this is the key) ---
+        # --- Build fallback link HTML (only if we have both URLs) ---
+        fallback_html = ""
+        if direct_url and adzuna_url and direct_url != adzuna_url:
+            fallback_html = f'''
+            <div style="text-align:center; margin-top:10px; font-size:0.85em; opacity:0.7;">
+                <a href="{adzuna_url}" target="_blank" rel="noopener noreferrer" style="color:#88c0ff; text-decoration:underline;">
+                    Not working? Try backup link
+                </a>
+            </div>
+            '''
+
+        # --- Final Job Card (NOW FULLY VALID) ---
         job_card = f"""
         <div class="job-card-custom">
             <h4 class="job-title">{title}</h4>
@@ -395,27 +402,17 @@ def display_jobs(jobs, user_skills):
                 <a href="{final_url}" 
                    target="_blank" 
                    rel="noopener noreferrer" 
-                   class="btn-apply-now"
-                   onclick="return confirm('You are being redirected to an external site. Continue?')">
+                   class="btn-apply-now">
                     {button_text}
                 </a>
             </div>
 
-            {f'<div style="text-align:center; margin-top:10px; font-size:0.85em; opacity:0.7;">
-        < a
-        href = "{adzuna_url}"
-        target = "_blank"
-        style = "color:#88c0ff;" > Not
-        working? Try
-        backup
-        link < / a >
-    < / div > ' if direct_url and adzuna_url and direct_url != adzuna_url else ''}
-    < / div >
-    < br >
-    """
+            {fallback_html}
+        </div>
+        <br>
+        """
 
-    # This is the MOST IMPORTANT line:
-    st.markdown(job_card, unsafe_allow_html=True)
+        st.markdown(job_card, unsafe_allow_html=True)
 
 # --- Data & Model Loading ---
 @st.cache_data
