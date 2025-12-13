@@ -730,16 +730,25 @@ if st.session_state.get("analysis_done", False):
     elif st.session_state.get("page") == "🤖 AI Career Chat":
         st.markdown("# 🤖 AI Career Chat")
 
-        # 1. Display History
+        # 1. Display History (Use the session state as the source of truth)
+        # We display all messages up to the second-to-last message statically.
         for msg in st.session_state.chat_messages:
             st.chat_message(msg["role"]).write(msg["content"])
 
         # 2. Process Assistant Response (If a user message is pending)
-        # This conditional block runs on the first rerun after a user types a message.
+        # We only generate a response if the last message came from the user.
         if st.session_state.chat_messages and st.session_state.chat_messages[-1]["role"] == "user":
             current_prompt = st.session_state.chat_messages[-1]["content"]
 
-            # Use st.chat_message for the streaming output
+            # --- START STREAMING PROCESS ---
+
+            # CRITICAL FIX: Use st.empty() to stream into the same spot,
+            # and then we rely on the final display loop (Step 1) to render the full message.
+
+            # The streaming placeholder is not needed here because st.chat_message handles it internally,
+            # but we will rely on the session history update and immediate rerun.
+
+            # This block generates and displays the stream, and captures the full text.
             with st.chat_message("assistant"):
                 with st.spinner("Thinking..."):
                     missing_core = ", ".join(st.session_state.get("missing_core_skills", []))
@@ -748,17 +757,18 @@ if st.session_state.get("analysis_done", False):
 
                     response_stream = generate_response(context)
 
-                    # st.write_stream handles the display and returns the final text.
+                    # st.write_stream displays the text in the message box and returns the full text.
                     full_response = st.write_stream(response_stream)
 
-            # Append the final, complete response to history
+            # Append the final, complete response to history (CRITICAL STATE UPDATE)
             st.session_state.chat_messages.append({"role": "assistant", "content": full_response})
 
-            # CRITICAL: Rerun to display the final message from the updated session state history.
+            # CRITICAL: Rerun to force the entire page to re-render, displaying the full message
+            # from the session state history (Step 1).
             st.rerun()
 
-        # 3. Chat Input (MUST be at the outer scope of the page logic)
-        # This block listens for new input and triggers the next rerun (which starts step 2).
+        # 3. Chat Input (MUST be the last thing in the page block)
+        # This listens for new input and triggers the response process (Step 2) on the next rerun.
         if prompt := st.chat_input("Ask for a learning roadmap...", key="final_chat_input"):
             st.session_state.chat_messages.append({"role": "user", "content": prompt})
             st.rerun()
