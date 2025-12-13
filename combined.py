@@ -692,25 +692,18 @@ if st.session_state.get("analysis_done", False):
                     user_skills_str = ", ".join(st.session_state.all_matched_skills)
                     prompt = create_prompt(user_skills_str, job_desc)
 
-                    # Store generated points temporarily
-                    st.session_state.generated_points = generate_response(prompt)
+                    response_stream = generate_response(prompt)
+                    # 💡 FIX: Concatenate the stream immediately into a string
+                    full_response_text = "".join(chunk.text for chunk in response_stream if chunk.text)
+                    # Store the final text, not the stream object
+                    st.session_state.generated_points_text = full_response_text  # NEW STATE KEY
+                    st.session_state.generated_points = None
+
 
         if st.session_state.generated_points:
             st.markdown("#### ✅ Your AI-Generated Resume Points")
+            st.markdown(st.session_state.generated_points_text, unsafe_allow_html=True)
 
-            # Streaming the response for speed (if generate_response returns a stream)
-            full_response = ""
-            assistant_response_box = st.empty()
-
-            # Assuming st.session_state.generated_points holds the stream object
-            if hasattr(st.session_state.generated_points, '_iter_'):
-                for chunk in st.session_state.generated_points:
-                    if chunk.text:  # <--- CRITICAL FIX ADDED HERE
-                        full_response += chunk.text
-                        assistant_response_box.markdown(full_response)
-            else:
-                # Fallback if st.session_state.generated_points is just text
-                st.markdown(st.session_state.generated_points, unsafe_allow_html=True)
 
 
     # --- Page 4: AI Career Chat ---
@@ -751,9 +744,10 @@ if st.session_state.get("analysis_done", False):
             st.rerun()
 
     # 2. Define the st.chat_input ONCE at the end of the script to anchor it to the bottom.
-    if prompt := st.chat_input("Ask for a learning roadmap...", key="final_chat_input"):
-        # Append user prompt to history
-        st.session_state.chat_messages.append({"role": "user", "content": prompt})
+    if st.session_state.get("analysis_done", False) and st.session_state.get("page") == "🤖 AI Career Chat":
+        if prompt := st.chat_input("Ask for a learning roadmap...", key="final_chat_input"):
+            # Append user prompt to history
+            st.session_state.chat_messages.append({"role": "user", "content": prompt})
 
-        # Trigger the response processing logic above on the next rerun
-        st.rerun()
+            # Trigger the response processing logic above on the next rerun
+            st.rerun()
