@@ -722,17 +722,16 @@ if st.session_state.get("analysis_done", False):
 
 # --- FINAL CHAT INPUT AND RESPONSE PROCESSING ---
 
-# This block executes if analysis is done AND we are on the Chat page.
-# This block executes if analysis is done AND we are on the Chat page.
-if st.session_state.get("analysis_done", False) and st.session_state.get("page") == "🤖 AI Career Chat":
+    if st.session_state.get("analysis_done", False) and st.session_state.get("page") == "🤖 AI Career Chat":
 
-    # 1. Check if an AI response is pending from a previous run
-    if st.session_state.chat_messages and st.session_state.chat_messages[-1]["role"] == "user":
-        # Get the user prompt (which is the last message)
-        current_prompt = st.session_state.chat_messages[-1]["content"]
+        # 1. Check if an AI response is pending from a previous run
+        if st.session_state.chat_messages and st.session_state.chat_messages[-1]["role"] == "user":
+            # Get the user prompt (which is the last message)
+            current_prompt = st.session_state.chat_messages[-1]["content"]
 
-        # Temporary placeholder logic to show the "Thinking" state
-        with st.empty():
+            # ❌ REMOVE THE OUTER with st.empty(): BLOCK HERE
+            # with st.empty():
+
             with st.chat_message("assistant"):
                 with st.spinner("Thinking..."):
                     # Define context for the AI model (optimized for conciseness)
@@ -742,16 +741,14 @@ if st.session_state.get("analysis_done", False) and st.session_state.get("page")
 
                     response_stream = generate_response(context)  # Get the streaming object
 
-                    # 💡 CORRECT IMPLEMENTATION: st.write_stream handles the display AND returns the final text.
-                    full_response = st.write_stream(response_stream)
+                    # CORRECT IMPLEMENTATION: st.write_stream handles the display AND returns the final text.
+                    full_response = st.write_stream(response_stream)  # This displays the output
 
-                    
+            # Append the final response to history
+            st.session_state.chat_messages.append({"role": "assistant", "content": full_response})
 
-        # Append the final response to history
-        st.session_state.chat_messages.append({"role": "assistant", "content": full_response})
-
-        # Force a clean render to show the completed message in the main history
-        st.rerun()
+            # Force a clean render to show the completed message in the main history
+            st.rerun()
 
     # 2. Define the st.chat_input ONCE at the end of the script to anchor it to the bottom.
     if prompt := st.chat_input("Ask for a learning roadmap...", key="final_chat_input"):
