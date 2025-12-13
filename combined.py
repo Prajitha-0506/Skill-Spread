@@ -730,42 +730,35 @@ if st.session_state.get("analysis_done", False):
     elif st.session_state.get("page") == "🤖 AI Career Chat":
         st.markdown("# 🤖 AI Career Chat")
 
+        # 1. Display History
         for msg in st.session_state.chat_messages:
             st.chat_message(msg["role"]).write(msg["content"])
 
-        # --- FINAL CHAT INPUT AND RESPONSE PROCESSING ---
+        # 2. Process Assistant Response (If a user message is pending)
+        # This conditional block runs on the first rerun after a user types a message.
+        if st.session_state.chat_messages and st.session_state.chat_messages[-1]["role"] == "user":
+            current_prompt = st.session_state.chat_messages[-1]["content"]
 
-        if st.session_state.get("analysis_done", False) and st.session_state.get("page") == "🤖 AI Career Chat":
+            # Use st.chat_message for the streaming output
+            with st.chat_message("assistant"):
+                with st.spinner("Thinking..."):
+                    missing_core = ", ".join(st.session_state.get("missing_core_skills", []))
+                    job_role = st.session_state.get("job_role", "Not specified")
+                    context = f"""You are an AI Career Mentor for the role of {job_role}. The user's missing core skills are: {missing_core}. Please answer their question: {current_prompt}"""
 
-            # 1. Check for new user input from the chat box
-            if prompt := st.chat_input("Ask for a learning roadmap...", key="final_chat_input"):
-                # Append user prompt to history
-                st.session_state.chat_messages.append({"role": "user", "content": prompt})
+                    response_stream = generate_response(context)
 
-                # We need to rerun to process the response in the history loop above.
-                # This moves the logic from step 2 in your original code to step 1 here.
-                st.rerun()
+                    # st.write_stream handles the display and returns the final text.
+                    full_response = st.write_stream(response_stream)
 
-            # 2. Check if an AI response is pending (i.e., the last message is a user message we just added)
-            # NOTE: This block should execute only on the rerun triggered by the user input above.
-            if st.session_state.chat_messages and st.session_state.chat_messages[-1]["role"] == "user":
-                current_prompt = st.session_state.chat_messages[-1]["content"]
+            # Append the final, complete response to history
+            st.session_state.chat_messages.append({"role": "assistant", "content": full_response})
 
-                with st.chat_message("assistant"):
-                    with st.spinner("Thinking..."):
-                        # Define context for the AI model
-                        missing_core = ", ".join(st.session_state.get("missing_core_skills", []))
-                        job_role = st.session_state.get("job_role", "Not specified")
-                        context = f"""You are an AI Career Mentor for the role of {job_role}. The user's missing core skills are: {missing_core}. Please answer their question: {current_prompt}"""
+            # CRITICAL: Rerun to display the final message from the updated session state history.
+            st.rerun()
 
-                        response_stream = generate_response(context)  # Get the streaming object
-
-                        # CORRECT IMPLEMENTATION: st.write_stream handles the display AND returns the final text.
-                        full_response = st.write_stream(response_stream)
-
-                # Append the final, complete response to history
-                st.session_state.chat_messages.append({"role": "assistant", "content": full_response})
-
-                # CRITICAL FIX: Add a final rerun here. This ensures that the message history
-                # is fully persisted and displayed in a clean, non-streaming state.
-                st.rerun()
+        # 3. Chat Input (MUST be at the outer scope of the page logic)
+        # This block listens for new input and triggers the next rerun (which starts step 2).
+        if prompt := st.chat_input("Ask for a learning roadmap...", key="final_chat_input"):
+            st.session_state.chat_messages.append({"role": "user", "content": prompt})
+            st.rerun()
