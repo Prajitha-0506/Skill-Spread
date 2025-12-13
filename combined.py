@@ -684,6 +684,7 @@ if st.session_state.get("analysis_done", False):
             st.info("Paste a job description below to get tailored resume bullet points based on your skills.",
                     icon="📄")
         job_desc = st.text_area("Paste Job Description Here", height=200, label_visibility="collapsed")
+
         if st.button("Generate Resume Points", use_container_width=True):
             if not job_desc.strip():
                 st.warning("Please paste a job description.")
@@ -693,15 +694,20 @@ if st.session_state.get("analysis_done", False):
                     prompt = create_prompt(user_skills_str, job_desc)
 
                     response_stream = generate_response(prompt)
-                    # 💡 FIX: Concatenate the stream immediately into a string
-                    full_response_text = "".join(chunk.text for chunk in response_stream if chunk.text)
-                    # Store the final text, not the stream object
-                    st.session_state.generated_points_text = full_response_text  # NEW STATE KEY
-                    st.session_state.generated_points = None
 
+                    # 💡 CORRECT FIX: Concatenate the stream immediately into a string
+                    full_response_text = "".join(chunk.text for chunk in response_stream if hasattr(chunk, 'text'))
 
-        if st.session_state.generated_points:
+                    # Store the final text
+                    st.session_state.generated_points_text = full_response_text
+
+                    # CRITICAL: SET A FLAG to indicate generation is complete and ready to display
+                    st.session_state.generated_points_display = True
+
+                    # Change the display condition to the new, corrected flag
+        if st.session_state.get("generated_points_display", False):
             st.markdown("#### ✅ Your AI-Generated Resume Points")
+            # Display the stored text
             st.markdown(st.session_state.generated_points_text, unsafe_allow_html=True)
 
 
@@ -715,39 +721,36 @@ if st.session_state.get("analysis_done", False):
 
 # --- FINAL CHAT INPUT AND RESPONSE PROCESSING ---
 
-    if st.session_state.get("analysis_done", False) and st.session_state.get("page") == "🤖 AI Career Chat":
+if st.session_state.get("analysis_done", False) and st.session_state.get("page") == "🤖 AI Career Chat":
 
-        # 1. Check if an AI response is pending from a previous run
-        if st.session_state.chat_messages and st.session_state.chat_messages[-1]["role"] == "user":
-            # Get the user prompt (which is the last message)
-            current_prompt = st.session_state.chat_messages[-1]["content"]
+    # 1. Check if an AI response is pending from a previous run (last message is 'user')
+    if st.session_state.chat_messages and st.session_state.chat_messages[-1]["role"] == "user":
+        # Get the user prompt (which is the last message)
+        current_prompt = st.session_state.chat_messages[-1]["content"]
 
-            # ❌ REMOVE THE OUTER with st.empty(): BLOCK HERE
-            # with st.empty():
+        with st.chat_message("assistant"):
+            with st.spinner("Thinking..."):
+                # Define context for the AI model
+                missing_core = ", ".join(st.session_state.get("missing_core_skills", []))
+                job_role = st.session_state.get("job_role", "Not specified")
+                context = f"""You are an AI Career Mentor for the role of {job_role}. The user's missing core skills are: {missing_core}. Please answer their question: {current_prompt}"""
 
-            with st.chat_message("assistant"):
-                with st.spinner("Thinking..."):
-                    # Define context for the AI model (optimized for conciseness)
-                    missing_core = ", ".join(st.session_state.get("missing_core_skills", []))
-                    job_role = st.session_state.get("job_role", "Not specified")
-                    context = f"""You are an AI Career Mentor for the role of {job_role}. The user's missing core skills are: {missing_core}. Please answer their question: {current_prompt}"""
+                response_stream = generate_response(context)  # Get the streaming object
 
-                    response_stream = generate_response(context)  # Get the streaming object
+                # CORRECT IMPLEMENTATION: st.write_stream handles the display AND returns the final text.
+                # We rely on this function to display the output chunk by chunk.
+                full_response = st.write_stream(response_stream)
 
-                    # CORRECT IMPLEMENTATION: st.write_stream handles the display AND returns the final text.
-                    full_response = st.write_stream(response_stream)  # This displays the output
+                # Append the final response to history
+        st.session_state.chat_messages.append({"role": "assistant", "content": full_response})
 
-            # Append the final response to history
-            st.session_state.chat_messages.append({"role": "assistant", "content": full_response})
-
-            # Force a clean render to show the completed message in the main history
-            st.rerun()
+        # ❌ CRITICAL FIX: REMOVE st.rerun() here.
+        # The next loop of the script execution will re-render the history correctly.
 
     # 2. Define the st.chat_input ONCE at the end of the script to anchor it to the bottom.
-    if st.session_state.get("analysis_done", False) and st.session_state.get("page") == "🤖 AI Career Chat":
-        if prompt := st.chat_input("Ask for a learning roadmap...", key="final_chat_input"):
-            # Append user prompt to history
-            st.session_state.chat_messages.append({"role": "user", "content": prompt})
+    if prompt := st.chat_input("Ask for a learning roadmap...", key="final_chat_input"):
+        # Append user prompt to history
+        st.session_state.chat_messages.append({"role": "user", "content": prompt})
 
-            # Trigger the response processing logic above on the next rerun
-            st.rerun()
+        # Trigger the response processing logic above on the next rerun
+        st.rerun()
