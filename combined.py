@@ -769,6 +769,7 @@ if st.session_state.get("analysis_done", False):
 
         # 3. Chat Input (MUST be the last thing in the page block)
         # This listens for new input and triggers the response process (Step 2) on the next rerun.
-        if prompt := st.chat_input("Ask for a learning roadmap...", key="final_chat_input"):
-            st.session_state.chat_messages.append({"role": "user", "content": prompt})
-            st.rerun()
+        if st.session_state.get("page") == "🤖 AI Career Chat":
+            if prompt := st.chat_input("Ask for a learning roadmap...", key="isolated_chat_input"):
+                st.session_state.chat_messages.append({"role": "user", "content": prompt})
+                st.rerun()
