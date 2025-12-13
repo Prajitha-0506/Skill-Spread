@@ -696,7 +696,21 @@ if st.session_state.get("analysis_done", False):
                     response_stream = generate_response(prompt)
 
                     # 💡 CORRECT FIX: Concatenate the stream immediately into a string
-                    full_response_text = "".join(chunk.text for chunk in response_stream if hasattr(chunk, 'text'))
+                    full_response_text = ""
+                    for chunk in response_stream:
+                        if chunk.candidates:
+                            # Safely access text from the first candidate's content parts
+                            # Note: This is equivalent to chunk.text, but we rely on st.write_stream
+                            # for better error handling/display in the chat, so let's stick to simple iteration here.
+                            try:
+                                full_response_text += chunk.text
+                            except ValueError:
+                                # Catch the specific ValueError and skip the chunk
+                                pass
+
+                                # Alternative and safer: Use the original Streamlit fix concept but robustly:
+                    # full_response_text = "".join(chunk.text for chunk in response_stream if chunk.text)
+                    # The issue is stream consumption. The best fix is to use the `try...except` block above.
 
                     # Store the final text
                     st.session_state.generated_points_text = full_response_text
@@ -719,38 +733,38 @@ if st.session_state.get("analysis_done", False):
         for msg in st.session_state.chat_messages:
             st.chat_message(msg["role"]).write(msg["content"])
 
-# --- FINAL CHAT INPUT AND RESPONSE PROCESSING ---
+        # --- FINAL CHAT INPUT AND RESPONSE PROCESSING ---
 
-if st.session_state.get("analysis_done", False) and st.session_state.get("page") == "🤖 AI Career Chat":
+        if st.session_state.get("analysis_done", False) and st.session_state.get("page") == "🤖 AI Career Chat":
 
-    # 1. Check if an AI response is pending from a previous run (last message is 'user')
-    if st.session_state.chat_messages and st.session_state.chat_messages[-1]["role"] == "user":
-        # Get the user prompt (which is the last message)
-        current_prompt = st.session_state.chat_messages[-1]["content"]
+            # 1. Check if an AI response is pending from a previous run (last message is 'user')
+            if st.session_state.chat_messages and st.session_state.chat_messages[-1]["role"] == "user":
+                # Get the user prompt (which is the last message)
+                current_prompt = st.session_state.chat_messages[-1]["content"]
 
-        with st.chat_message("assistant"):
-            with st.spinner("Thinking..."):
-                # Define context for the AI model
-                missing_core = ", ".join(st.session_state.get("missing_core_skills", []))
-                job_role = st.session_state.get("job_role", "Not specified")
-                context = f"""You are an AI Career Mentor for the role of {job_role}. The user's missing core skills are: {missing_core}. Please answer their question: {current_prompt}"""
+                with st.chat_message("assistant"):
+                    with st.spinner("Thinking..."):
+                        # Define context for the AI model
+                        missing_core = ", ".join(st.session_state.get("missing_core_skills", []))
+                        job_role = st.session_state.get("job_role", "Not specified")
+                        context = f"""You are an AI Career Mentor for the role of {job_role}. The user's missing core skills are: {missing_core}. Please answer their question: {current_prompt}"""
 
-                response_stream = generate_response(context)  # Get the streaming object
+                        response_stream = generate_response(context)  # Get the streaming object
 
-                # CORRECT IMPLEMENTATION: st.write_stream handles the display AND returns the final text.
-                # We rely on this function to display the output chunk by chunk.
-                full_response = st.write_stream(response_stream)
+                        # CORRECT IMPLEMENTATION: st.write_stream handles the display AND returns the final text.
+                        # We rely on this function to display the output chunk by chunk.
+                        full_response = st.write_stream(response_stream)
 
-                # Append the final response to history
-        st.session_state.chat_messages.append({"role": "assistant", "content": full_response})
+                        # Append the final response to history
+                st.session_state.chat_messages.append({"role": "assistant", "content": full_response})
 
-        # ❌ CRITICAL FIX: REMOVE st.rerun() here.
-        # The next loop of the script execution will re-render the history correctly.
+                # ❌ CRITICAL FIX: REMOVE st.rerun() here.
+                # The next loop of the script execution will re-render the history correctly.
 
-    # 2. Define the st.chat_input ONCE at the end of the script to anchor it to the bottom.
-    if prompt := st.chat_input("Ask for a learning roadmap...", key="final_chat_input"):
-        # Append user prompt to history
-        st.session_state.chat_messages.append({"role": "user", "content": prompt})
+            # 2. Define the st.chat_input ONCE at the end of the script to anchor it to the bottom.
+            if prompt := st.chat_input("Ask for a learning roadmap...", key="final_chat_input"):
+                # Append user prompt to history
+                st.session_state.chat_messages.append({"role": "user", "content": prompt})
 
-        # Trigger the response processing logic above on the next rerun
-        st.rerun()
+                # Trigger the response processing logic above on the next rerun
+                st.rerun()
