@@ -723,11 +723,11 @@ if st.session_state.get("analysis_done", False):
 # --- FINAL CHAT INPUT AND RESPONSE PROCESSING ---
 
 # This block executes if analysis is done AND we are on the Chat page.
+# This block executes if analysis is done AND we are on the Chat page.
 if st.session_state.get("analysis_done", False) and st.session_state.get("page") == "🤖 AI Career Chat":
 
     # 1. Check if an AI response is pending from a previous run
     if st.session_state.chat_messages and st.session_state.chat_messages[-1]["role"] == "user":
-
         # Get the user prompt (which is the last message)
         current_prompt = st.session_state.chat_messages[-1]["content"]
 
@@ -742,13 +742,10 @@ if st.session_state.get("analysis_done", False) and st.session_state.get("page")
 
                     response_stream = generate_response(context)  # Get the streaming object
 
-                    full_response = ""
-                    assistant_response_box = st.empty()  # Placeholder for streaming text
+                    # 💡 CORRECT IMPLEMENTATION: st.write_stream handles the display AND returns the final text.
+                    full_response = st.write_stream(response_stream)
 
-                    for chunk in response_stream:
-                        if chunk.text:
-                            full_response += chunk.text
-                            assistant_response_box.markdown(full_response)
+                    
 
         # Append the final response to history
         st.session_state.chat_messages.append({"role": "assistant", "content": full_response})
