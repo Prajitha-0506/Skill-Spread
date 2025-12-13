@@ -730,46 +730,49 @@ if st.session_state.get("analysis_done", False):
     elif st.session_state.get("page") == "🤖 AI Career Chat":
         st.markdown("# 🤖 AI Career Chat")
 
-        # 1. Display History (Use the session state as the source of truth)
-        # We display all messages up to the second-to-last message statically.
+        # Display all messages from history
         for msg in st.session_state.chat_messages:
             st.chat_message(msg["role"]).write(msg["content"])
 
-        # 2. Process Assistant Response (If a user message is pending)
-        # We only generate a response if the last message came from the user.
+        # If the last message is from the user, generate and stream the response
         if st.session_state.chat_messages and st.session_state.chat_messages[-1]["role"] == "user":
-            current_prompt = st.session_state.chat_messages[-1]["content"]
+            user_prompt = st.session_state.chat_messages[-1]["content"]
 
-            # --- START STREAMING PROCESS ---
-
-            # CRITICAL FIX: Use st.empty() to stream into the same spot,
-            # and then we rely on the final display loop (Step 1) to render the full message.
-
-            # The streaming placeholder is not needed here because st.chat_message handles it internally,
-            # but we will rely on the session history update and immediate rerun.
-
-            # This block generates and displays the stream, and captures the full text.
+            # Create a placeholder for the assistant's streaming response
             with st.chat_message("assistant"):
-                with st.spinner("Thinking..."):
-                    missing_core = ", ".join(st.session_state.get("missing_core_skills", []))
-                    job_role = st.session_state.get("job_role", "Not specified")
-                    context = f"""You are an AI Career Mentor for the role of {job_role}. The user's missing core skills are: {missing_core}. Please answer their question: {current_prompt}"""
+                placeholder = st.empty()  # This will hold the growing response
+                full_response = ""
 
+                missing_core = ", ".join(st.session_state.get("missing_core_skills", []))
+                job_role = st.session_state.get("job_role", "Not specified")
+                context = f"""You are an AI Career Mentor for the role of {job_role}. The user's missing core skills are: {missing_core}. Please answer their question: {user_prompt}"""
+
+                try:
                     response_stream = generate_response(context)
 
-                    # st.write_stream displays the text in the message box and returns the full text.
-                    full_response = st.write_stream(response_stream)
+                    # Stream each chunk into the placeholder
+                    for chunk in response_stream:
+                        if chunk.text:
+                            full_response += chunk.text
+                            placeholder.markdown(full_response + "▌")  # Cursor effect
 
-            # Append the final, complete response to history (CRITICAL STATE UPDATE)
-            st.session_state.chat_messages.append({"role": "assistant", "content": full_response})
+                    # Final update without cursor
+                    placeholder.markdown(full_response)
 
-            # CRITICAL: Rerun to force the entire page to re-render, displaying the full message
-            # from the session state history (Step 1).
-            st.rerun()
+                except Exception as e:
+                    placeholder.error(f"Error generating response: {e}")
+                    full_response = "Sorry, I encountered an error. Please try again."
 
-        # 3. Chat Input (MUST be the last thing in the page block)
-        # This listens for new input and triggers the response process (Step 2) on the next rerun.
-        if st.session_state.get("page") == "🤖 AI Career Chat":
-            if prompt := st.chat_input("Ask for a learning roadmap...", key="isolated_chat_input"):
-                st.session_state.chat_messages.append({"role": "user", "content": prompt})
-                st.rerun()
+                # Only NOW append the complete response to history
+                st.session_state.chat_messages.append({
+                    "role": "assistant",
+                    "content": full_response
+                })
+
+                # Optional: small delay to show final message clearly
+                # No st.rerun() needed — the message is already fully displayed
+
+        # Chat input — must be at the very end
+        if prompt := st.chat_input("Ask for a learning roadmap, project ideas, or career advice..."):
+            st.session_state.chat_messages.append({"role": "user", "content": prompt})
+            st.rerun()  # Only rerun after new user input
