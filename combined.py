@@ -684,25 +684,32 @@ if st.session_state.get("analysis_done", False):
             else:
                 st.warning("Please select a target role on the home page first.")
 
-        with inner_tab2:
-            if st.session_state.valid_user_skills:
-                # Use your existing logic to get 'top_role' from the vectorizer/model
-                skills_text = ", ".join(list(set(st.session_state.valid_user_skills)))
-                skills_vector = vectorizer.transform([skills_text])
-                probas = model.predict_proba(skills_vector)
-                top_role = job_roles[np.argmax(probas[0])]
-
-                st.info(f"Top predicted role: **{top_role}** in **{job_loc}**")
-                with st.spinner("Fetching..."):
-                    jobs = fetch_jobs(top_role, location=job_loc)
-                    display_jobs(jobs[:5], st.session_state.get("original_skills", []))
-
         with inner_tab3:
-            query_skills = " ".join(st.session_state.get("original_skills", []))
-            st.info(f"Jobs matching your skills: **{query_skills}** in **{job_loc}**")
-            with st.spinner("Fetching..."):
-                jobs = fetch_jobs(query_skills, location=job_loc)
-                display_jobs(jobs[:5], st.session_state.get("original_skills", []))
+            # Get the user's skills
+            all_user_skills = st.session_state.get("original_skills", [])
+
+            if all_user_skills:
+                # IMPROVEMENT: If there are many skills, take only the first 3 for the search query
+                # This prevents the search from becoming too narrow/strict
+                search_skills = all_user_skills[:3] if len(all_user_skills) > 3 else all_user_skills
+                query_skills = ", ".join(search_skills)
+
+                st.info(f"Showing jobs matching your top skills: **{query_skills}** in **{job_loc}**")
+
+                with st.spinner("Fetching best matches..."):
+                    # Pass the optimized query to the API
+                    jobs = fetch_jobs(query_skills, location=job_loc)
+
+                    if not jobs and len(all_user_skills) > 1:
+                        st.warning("No perfect matches found for those skills combined. Trying a broader search...")
+                        # Fallback: Just search for the very first (strongest) skill
+                        jobs = fetch_jobs(all_user_skills[0], location=job_loc)
+
+                    display_jobs(jobs[:5], all_user_skills)
+            else:
+                st.caption("Enter skills to see relevant jobs.")
+
+
 
 
 
