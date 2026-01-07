@@ -282,11 +282,12 @@ def create_prompt(skills, job_description):
 def generate_response(prompt):
     try:
         genai.configure(api_key=st.secrets["api"]["gemini_api_key"])
-        # Rename this to avoid conflict with your job predictor 'model'
+        # We use 'gemini-1.5-flash' which is the current stable standard
         ai_mentor_model = genai.GenerativeModel('gemini-1.5-flash')
 
         response_stream = ai_mentor_model.generate_content(prompt, stream=True)
         return response_stream
+
     except Exception as e:
         st.error(f"An error occurred with the AI model: {e}")
         return None
@@ -739,18 +740,15 @@ if st.session_state.get("analysis_done", False):
     elif st.session_state.get("page") == "🤖 AI Career Chat":
         st.markdown("# 🤖 AI Career Chat")
 
-        # 1. Initialize session state if not present
         if "chat_messages" not in st.session_state:
             st.session_state.chat_messages = []
 
-        # 2. Display all messages from history
         for msg in st.session_state.chat_messages:
             st.chat_message(msg["role"]).write(msg["content"])
 
-        # 3. Handle User Message
         if st.session_state.chat_messages and st.session_state.chat_messages[-1]["role"] == "user":
 
-            # --- CONSTRUCT MEMORY ---
+            # Convert history for Gemini format
             history_context = []
             for m in st.session_state.chat_messages[:-1]:
                 role = "model" if m["role"] == "assistant" else "user"
@@ -759,6 +757,7 @@ if st.session_state.get("analysis_done", False):
             user_prompt = st.session_state.chat_messages[-1]["content"]
             missing_core = ", ".join(st.session_state.get("missing_core_skills", []))
             job_role = st.session_state.get("job_role", "Not specified")
+
             system_instruction = f"You are an AI Career Mentor for the role of {job_role}. The user's missing core skills are: {missing_core}."
 
             with st.chat_message("assistant"):
@@ -766,11 +765,11 @@ if st.session_state.get("analysis_done", False):
                 full_response = ""
 
                 try:
-                    # FIX: Initialize the model with a different name than 'model'
+                    # RE-CONFIGURE HERE TO ENSURE FRESH SESSION
                     genai.configure(api_key=st.secrets["api"]["gemini_api_key"])
                     ai_mentor_model = genai.GenerativeModel('gemini-1.5-flash')
 
-                    # FIX: Use ai_mentor_model here
+                    # USE THE RENAMED MODEL
                     chat = ai_mentor_model.start_chat(history=history_context)
                     response_stream = chat.send_message(f"{system_instruction}\n\nUser: {user_prompt}", stream=True)
 
@@ -782,7 +781,7 @@ if st.session_state.get("analysis_done", False):
                     placeholder.markdown(full_response)
 
                 except Exception as e:
-                    placeholder.error(f"Error: {e}")
+                    placeholder.error(f"Model Error: {e}. Check if 'gemini-1.5-flash' is available in your region.")
                     full_response = "Sorry, I encountered an error."
 
                 st.session_state.chat_messages.append({"role": "assistant", "content": full_response})
