@@ -730,49 +730,64 @@ if st.session_state.get("analysis_done", False):
     elif st.session_state.get("page") == "🤖 AI Career Chat":
         st.markdown("# 🤖 AI Career Chat")
 
-        # Display all messages from history
+        # 1. Initialize session state if not present
+        if "chat_messages" not in st.session_state:
+            st.session_state.chat_messages = []
+
+        # 2. Display all messages from history
         for msg in st.session_state.chat_messages:
             st.chat_message(msg["role"]).write(msg["content"])
 
-        # If the last message is from the user, generate and stream the response
+        # 3. If the last message is from the user, generate response using FULL HISTORY
         if st.session_state.chat_messages and st.session_state.chat_messages[-1]["role"] == "user":
+
+            # --- CONSTRUCT MEMORY ---
+            # Convert Streamlit history to Gemini history format
+            # Gemini roles: "user" and "model" (instead of "assistant")
+            history_context = []
+            for m in st.session_state.chat_messages[:-1]:  # All previous turns
+                role = "model" if m["role"] == "assistant" else "user"
+                history_context.append({"role": role, "parts": [m["content"]]})
+
+            # Latest User Prompt
             user_prompt = st.session_state.chat_messages[-1]["content"]
 
-            # Create a placeholder for the assistant's streaming response
+            # Get dynamic context from your app state
+            missing_core = ", ".join(st.session_state.get("missing_core_skills", []))
+            job_role = st.session_state.get("job_role", "Not specified")
+
+            system_instruction = f"You are an AI Career Mentor for the role of {job_role}. The user's missing core skills are: {missing_core}."
+
             with st.chat_message("assistant"):
-                placeholder = st.empty()  # This will hold the growing response
+                placeholder = st.empty()
                 full_response = ""
 
-                missing_core = ", ".join(st.session_state.get("missing_core_skills", []))
-                job_role = st.session_state.get("job_role", "Not specified")
-                context = f"""You are an AI Career Mentor for the role of {job_role}. The user's missing core skills are: {missing_core}. Please answer their question: {user_prompt}"""
-
                 try:
-                    response_stream = generate_response(context)
+                    # 4. Use a chat session for built-in memory management
+                    # Start chat with history_context
+                    chat = model.start_chat(history=history_context)
 
-                    # Stream each chunk into the placeholder
+                    # Send the prompt as part of the session
+                    # (You can prepend the system_instruction to the first message if needed)
+                    response_stream = chat.send_message(f"{system_instruction}\n\nUser: {user_prompt}", stream=True)
+
                     for chunk in response_stream:
                         if chunk.text:
                             full_response += chunk.text
-                            placeholder.markdown(full_response + "▌")  # Cursor effect
+                            placeholder.markdown(full_response + "▌")
 
-                    # Final update without cursor
                     placeholder.markdown(full_response)
 
                 except Exception as e:
-                    placeholder.error(f"Error generating response: {e}")
-                    full_response = "Sorry, I encountered an error. Please try again."
+                    placeholder.error(f"Error: {e}")
+                    full_response = "Sorry, I encountered an error."
 
-                # Only NOW append the complete response to history
+                # Append the assistant's response to history
                 st.session_state.chat_messages.append({
                     "role": "assistant",
                     "content": full_response
                 })
 
-                # Optional: small delay to show final message clearly
-                # No st.rerun() needed — the message is already fully displayed
-
-        # Chat input — must be at the very end
         if prompt := st.chat_input("Ask for a learning roadmap, project ideas, or career advice..."):
             st.session_state.chat_messages.append({"role": "user", "content": prompt})
-            st.rerun()  # Only rerun after new user input
+            st.rerun()
