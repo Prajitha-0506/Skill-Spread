@@ -1,5 +1,6 @@
 streamlit
 pandas
+openpyxl
 joblib
 scikit-learn
 numpy
@@ -8,3 +9,4 @@ matplotlib
 google-generativeai
 streamlit-js-eval
 plotly
+python-dateutil
