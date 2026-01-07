@@ -31,6 +31,9 @@ def fetch_jobs(skill, location="India"):
         "content-type": "application/json"
     }
 
+    if location.strip():
+        params["where"] = location
+
     # 3. API Request with Error Handling
     try:
         response = requests.get(url, params=params, timeout=15)

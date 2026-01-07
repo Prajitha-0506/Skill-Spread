@@ -666,8 +666,10 @@ if st.session_state.get("analysis_done", False):
         st.markdown("# 🔍 Find Relevant Jobs")
 
         # Requirement 3: Location Filter
-        job_loc = st.text_input("📍 Preferred Location", placeholder="e.g., Remote, Bangalore, New York",
-                                value="Remote")
+        job_loc = st.text_input("📍 Preferred Location (Leave blank for 'Anywhere')",
+                                placeholder="e.g., Remote, Bangalore, Hyderabad", value="")
+
+        loc_display = job_loc if job_loc.strip() else "Anywhere"
 
         # Requirement 4: Added "My Target Role" Tab
         inner_tab1, inner_tab2, inner_tab3 = st.tabs(["🎯 My Target Role", "🔮 Predicted Role", "🛠 By My Skills"])
