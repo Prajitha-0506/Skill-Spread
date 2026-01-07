@@ -281,17 +281,20 @@ def create_prompt(skills, job_description):
 
 def generate_response(prompt):
     try:
+        # Use the 2026 stable model ID
+        AI_MODEL_NAME = 'gemini-2.5-flash'
+
         genai.configure(api_key=st.secrets["api"]["gemini_api_key"])
 
-        # Use 'gemini-1.5-flash' - this is the most stable ID
-        # Rename to ai_mentor_model to avoid clash with your .pkl 'model'
-        ai_mentor_model = genai.GenerativeModel('gemini-1.5-flash')
+        # Rename this variable to 'career_ai' to avoid clashing with your .pkl 'model'
+        career_ai = genai.GenerativeModel(AI_MODEL_NAME)
 
-        response_stream = ai_mentor_model.generate_content(prompt, stream=True)
+        # Start generating content
+        response_stream = career_ai.generate_content(prompt, stream=True)
         return response_stream
 
     except Exception as e:
-        st.error(f"AI Model Error: {e}")
+        st.error(f"AI Connection Error: {e}. Please verify your API key and model name.")
         return None
 
 
@@ -749,7 +752,7 @@ if st.session_state.get("analysis_done", False):
         for msg in st.session_state.chat_messages:
             st.chat_message(msg["role"]).write(msg["content"])
 
-        # Generate response if last message is from user
+        # Check for new user input to process
         if st.session_state.chat_messages and st.session_state.chat_messages[-1]["role"] == "user":
 
             # Map history to Gemini format (user -> user, assistant -> model)
@@ -762,23 +765,22 @@ if st.session_state.get("analysis_done", False):
             missing_core = ", ".join(st.session_state.get("missing_core_skills", []))
             job_role = st.session_state.get("job_role", "Not specified")
 
-            system_instruction = f"You are an AI Career Mentor for {job_role}. Missing skills: {missing_core}."
+            system_instruction = f"Context: You are a career mentor for {job_role}. User lacks: {missing_core}."
 
             with st.chat_message("assistant"):
                 placeholder = st.empty()
                 full_response = ""
 
                 try:
-                    # Re-init Gemini specifically as ai_mentor_model
                     genai.configure(api_key=st.secrets["api"]["gemini_api_key"])
-                    ai_mentor_model = genai.GenerativeModel('gemini-1.5-flash')
+                    # Using the 2026 standard model ID
+                    career_ai = genai.GenerativeModel('gemini-2.5-flash')
 
-                    # Create the chat session with history
-                    chat_session = ai_mentor_model.start_chat(history=history_context)
+                    # Correctly starting the chat session with history
+                    chat_session = career_ai.start_chat(history=history_context)
 
-                    # Send message
                     response_stream = chat_session.send_message(
-                        f"{system_instruction}\n\nUser Question: {user_prompt}",
+                        f"{system_instruction}\n\nUser: {user_prompt}",
                         stream=True
                     )
 
@@ -790,11 +792,11 @@ if st.session_state.get("analysis_done", False):
                     placeholder.markdown(full_response)
 
                 except Exception as e:
-                    placeholder.error(f"Error: {e}. Please ensure your API key has access to 'gemini-1.5-flash'.")
-                    full_response = "I encountered a technical glitch. Please try again."
+                    placeholder.error(f"Chat Error: {e}. Try changing model to 'gemini-2.0-flash'.")
+                    full_response = "I'm having trouble connecting to my brain. Try again in a second!"
 
                 st.session_state.chat_messages.append({"role": "assistant", "content": full_response})
 
-        if prompt := st.chat_input("Ask for career advice..."):
+        if prompt := st.chat_input("Ask about roadmaps or interview tips..."):
             st.session_state.chat_messages.append({"role": "user", "content": prompt})
             st.rerun()
