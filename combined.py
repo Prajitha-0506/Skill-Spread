@@ -261,8 +261,22 @@ def get_base64_of_bin_file(bin_file):
 
 
 def create_prompt(skills, job_description):
-    # Modified prompt for conciseness
-    return f"""As an expert career coach, based on these skills: {skills} and this job description: {job_description}, write 3-5 powerful, highly concise resume bullet points starting with action verbs. Focus on matching the user's skills to the job requirements without inventing skills. Format them as a bulleted list."""
+    return f"""
+    You are an expert Executive Resume Writer. 
+    USER SKILLS: {skills}
+    JOB DESCRIPTION: {job_description}
+
+    TASK: Generate 3-5 high-impact resume bullet points.
+
+    META-PROMPTING INSTRUCTIONS:
+    1. First, identify the 3 most critical keywords or requirements from the Job Description.
+    2. Map the user's skills to these specific requirements.
+    3. For each bullet, use the Google XYZ formula: 'Accomplished [X] as measured by [Y], by doing [Z]'.
+    4. Start each bullet with a powerful action verb (e.g., 'Spearheaded', 'Optimized', 'Architected').
+    5. Be concise and do not invent experience.
+
+    OUTPUT: Provide only the bullet points in a clean markdown list.
+    """
 
 
 def generate_response(prompt):
@@ -433,7 +447,7 @@ def display_jobs(jobs, user_skills):
 # --- Data & Model Loading ---
 @st.cache_data
 def load_data():
-    data = pd.read_csv("skillspread_dataset.csv")
+    data = pd.read_excel("skillspread_dataset.xlsx")
     job_roles_dataset = pd.read_csv("realistic_unique_job_roles_dataset.csv")
     all_skills = set(job_roles_dataset["Skills"])
     roles_from_data = sorted(data['job_role'].str.title().unique())
