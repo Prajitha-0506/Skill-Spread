@@ -5,8 +5,6 @@ joblib
 scikit-learn
 numpy
 thefuzz
-matplotlib
 google-generativeai
-streamlit-js-eval
 plotly
-python-dateutil
+requests

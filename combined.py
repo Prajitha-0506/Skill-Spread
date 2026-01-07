@@ -664,34 +664,48 @@ if st.session_state.get("analysis_done", False):
     # --- Page 2: Find Jobs ---
     elif st.session_state.get("page") == "🔍 Find Jobs":
         st.markdown("# 🔍 Find Relevant Jobs")
-        inner_tab1, inner_tab2 = st.tabs(["🔮 By Predicted Role", "🛠 By Your Skills"])
+
+        # Requirement 3: Location Filter
+        job_loc = st.text_input("📍 Preferred Location", placeholder="e.g., Remote, Bangalore, New York",
+                                value="Remote")
+
+        # Requirement 4: Added "My Target Role" Tab
+        inner_tab1, inner_tab2, inner_tab3 = st.tabs(["🎯 My Target Role", "🔮 Predicted Role", "🛠 By My Skills"])
+
         with inner_tab1:
+            # Dynamically pull the role selected on the landing page
+            target_role = st.session_state.get("job_role")
+
+            if target_role and target_role != 'Select a Role':
+                st.info(f"Showing jobs for your selected role: **{target_role}** in **{job_loc}**")
+                with st.spinner(f"Searching for {target_role} jobs..."):
+                    jobs = fetch_jobs(target_role, location=job_loc)
+                    display_jobs(jobs[:5], st.session_state.get("original_skills", []))
+            else:
+                st.warning("Please select a target role on the home page first.")
+
+        with inner_tab2:
             if st.session_state.valid_user_skills:
+                # Use your existing logic to get 'top_role' from the vectorizer/model
                 skills_text = ", ".join(list(set(st.session_state.valid_user_skills)))
                 skills_vector = vectorizer.transform([skills_text])
-                probabilities = model.predict_proba(skills_vector)
-                top_role_index = np.argmax(probabilities[0])
-                top_role = job_roles[top_role_index]
+                probas = model.predict_proba(skills_vector)
+                top_role = job_roles[np.argmax(probas[0])]
 
-                st.info(f"Showing jobs for your top predicted role: *{top_role}*")
-                with st.spinner(f"Fetching jobs for {top_role}..."):
-                    # Original call without experience argument:
-                    jobs = fetch_jobs(top_role)
+                st.info(f"Top predicted role: **{top_role}** in **{job_loc}**")
+                with st.spinner("Fetching..."):
+                    jobs = fetch_jobs(top_role, location=job_loc)
                     display_jobs(jobs[:5], st.session_state.get("original_skills", []))
-            else:
-                st.caption("Enter valid skills for a role prediction.")
-        with inner_tab2:
-            if st.session_state.user_skills_cleaned:
-                all_skills = st.session_state.original_skills
-                query_skills = " ".join(all_skills)
-                # --- END FIX ---
 
-                st.info(f"Showing jobs for all user-entered skills: *{query_skills}*")
-                with st.spinner(f"Fetching jobs for your skills..."):
-                    jobs = fetch_jobs(query_skills)
-                    display_jobs(jobs[:5], st.session_state.get("original_skills", []))
-            else:
-                st.caption("Enter skills to see relevant jobs.")
+        with inner_tab3:
+            query_skills = " ".join(st.session_state.get("original_skills", []))
+            st.info(f"Jobs matching your skills: **{query_skills}** in **{job_loc}**")
+            with st.spinner("Fetching..."):
+                jobs = fetch_jobs(query_skills, location=job_loc)
+                display_jobs(jobs[:5], st.session_state.get("original_skills", []))
+
+
+
     # --- Page 3: Resume Builder ---
     elif st.session_state.get("page") == "📝 Resume Points Builder":
         with st.spinner("Preparing AI Builder interface..."):
