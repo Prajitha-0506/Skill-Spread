@@ -281,18 +281,13 @@ def create_prompt(skills, job_description):
 
 def generate_response(prompt):
     try:
-        # FIX: Access key via the "api" section, not a non-existent "gemini" section.
         genai.configure(api_key=st.secrets["api"]["gemini_api_key"])
-        ai_model = genai.GenerativeModel('gemini-1.5-flash')
+        # Rename this to avoid conflict with your job predictor 'model'
+        ai_mentor_model = genai.GenerativeModel('gemini-1.5-flash')
 
-        # CRITICAL FIX: Use streaming to reduce perceived latency
-        response_stream = model.generate_content(prompt, stream=True)
-
-        # Return the stream object
+        response_stream = ai_mentor_model.generate_content(prompt, stream=True)
         return response_stream
-
     except Exception as e:
-        # This catch is good, but the key error makes the traceback misleading
         st.error(f"An error occurred with the AI model: {e}")
         return None
 
@@ -752,24 +747,18 @@ if st.session_state.get("analysis_done", False):
         for msg in st.session_state.chat_messages:
             st.chat_message(msg["role"]).write(msg["content"])
 
-        # 3. If the last message is from the user, generate response using FULL HISTORY
+        # 3. Handle User Message
         if st.session_state.chat_messages and st.session_state.chat_messages[-1]["role"] == "user":
 
             # --- CONSTRUCT MEMORY ---
-            # Convert Streamlit history to Gemini history format
-            # Gemini roles: "user" and "model" (instead of "assistant")
             history_context = []
-            for m in st.session_state.chat_messages[:-1]:  # All previous turns
+            for m in st.session_state.chat_messages[:-1]:
                 role = "model" if m["role"] == "assistant" else "user"
                 history_context.append({"role": role, "parts": [m["content"]]})
 
-            # Latest User Prompt
             user_prompt = st.session_state.chat_messages[-1]["content"]
-
-            # Get dynamic context from your app state
             missing_core = ", ".join(st.session_state.get("missing_core_skills", []))
             job_role = st.session_state.get("job_role", "Not specified")
-
             system_instruction = f"You are an AI Career Mentor for the role of {job_role}. The user's missing core skills are: {missing_core}."
 
             with st.chat_message("assistant"):
@@ -777,12 +766,12 @@ if st.session_state.get("analysis_done", False):
                 full_response = ""
 
                 try:
-                    # 4. Use a chat session for built-in memory management
-                    # Start chat with history_context
-                    chat = model.start_chat(history=history_context)
+                    # FIX: Initialize the model with a different name than 'model'
+                    genai.configure(api_key=st.secrets["api"]["gemini_api_key"])
+                    ai_mentor_model = genai.GenerativeModel('gemini-1.5-flash')
 
-                    # Send the prompt as part of the session
-                    # (You can prepend the system_instruction to the first message if needed)
+                    # FIX: Use ai_mentor_model here
+                    chat = ai_mentor_model.start_chat(history=history_context)
                     response_stream = chat.send_message(f"{system_instruction}\n\nUser: {user_prompt}", stream=True)
 
                     for chunk in response_stream:
@@ -796,12 +785,8 @@ if st.session_state.get("analysis_done", False):
                     placeholder.error(f"Error: {e}")
                     full_response = "Sorry, I encountered an error."
 
-                # Append the assistant's response to history
-                st.session_state.chat_messages.append({
-                    "role": "assistant",
-                    "content": full_response
-                })
+                st.session_state.chat_messages.append({"role": "assistant", "content": full_response})
 
-        if prompt := st.chat_input("Ask for a learning roadmap, project ideas, or career advice..."):
+        if prompt := st.chat_input("Ask for a roadmap or career advice..."):
             st.session_state.chat_messages.append({"role": "user", "content": prompt})
             st.rerun()
