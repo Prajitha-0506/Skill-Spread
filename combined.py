@@ -283,7 +283,7 @@ def generate_response(prompt):
     try:
         # FIX: Access key via the "api" section, not a non-existent "gemini" section.
         genai.configure(api_key=st.secrets["api"]["gemini_api_key"])
-        model = genai.GenerativeModel('gemini-2.5-flash')
+        ai_model = genai.GenerativeModel('gemini-1.5-flash')
 
         # CRITICAL FIX: Use streaming to reduce perceived latency
         response_stream = model.generate_content(prompt, stream=True)
