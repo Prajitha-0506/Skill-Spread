@@ -502,6 +502,8 @@ if not st.session_state.get("analysis_done", False):
 
     with st.container():
         # --- UI: Professional Feature Intro ---
+        st.write("")
+        st.write("")
 
         # Using columns to create a clean horizontal layout
         col_a, col_b, col_c = st.columns(3)
@@ -517,6 +519,9 @@ if not st.session_state.get("analysis_done", False):
         with col_c:
             st.markdown("### 💻 AI Mentorship")
             st.write("Chat with an AI Career Coach to bridge skill gaps and build high-impact resume points.")
+
+        st.write("")
+        st.write("")
 
         with st.form("input_form"):
             col1, col2 = st.columns(2)
