@@ -516,7 +516,7 @@ if not st.session_state.get("analysis_done", False):
             st.caption("Get ML-powered role predictions and browse live job openings instantly.")
 
         with col_c:
-            st.subheader("🤖 Mentor")
+            st.subheader("🎓 Mentor")
             st.caption("Chat with AI to optimize your resume and get personalized career coaching.")
 
         st.write("")  # Bottom spacing
