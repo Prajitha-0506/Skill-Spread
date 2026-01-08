@@ -27,6 +27,11 @@ st.set_page_config(
 # --- CSS is embedded directly ---
 def load_css():
     css_styles = """
+    
+    /* This hides the GitHub icon and the 'Made with Streamlit' footer */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
 
     /* --- Import Google Font --- */
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
