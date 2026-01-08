@@ -665,46 +665,56 @@ if st.session_state.get("analysis_done", False):
     elif st.session_state.get("page") == "🔍 Find Jobs":
         st.markdown("# 🔍 Find Relevant Jobs")
 
-        # Requirement 3: Location Filter
-        job_loc = st.text_input("📍 Preferred Location (Leave blank for 'Anywhere')",
-                                placeholder="e.g., Remote, Bangalore, Hyderabad", value="")
+        # User input for location
+        job_loc = st.text_input("📍 Preferred Location (Leave blank for all locations)", value="")
 
-        loc_display = job_loc if job_loc.strip() else "Anywhere"
+        # Dynamic location text helper
+        location_text = f" in **{job_loc.strip()}**" if job_loc.strip() else ""
 
-        # Requirement 4: Added "My Target Role" Tab
         inner_tab1, inner_tab2, inner_tab3 = st.tabs(["🎯 My Target Role", "🔮 Predicted Role", "🛠 By My Skills"])
 
         with inner_tab1:
-            # Dynamically pull the role selected on the landing page
             target_role = st.session_state.get("job_role")
-
             if target_role and target_role != 'Select a Role':
-                st.info(f"Showing jobs for your selected role: **{target_role}** in **{job_loc}**")
-                with st.spinner(f"Searching for {target_role} jobs..."):
+                st.info(f"Showing jobs for: **{target_role}**{location_text}")
+                with st.spinner(f"Searching for {target_role}..."):
                     jobs = fetch_jobs(target_role, location=job_loc)
                     display_jobs(jobs[:5], st.session_state.get("original_skills", []))
             else:
                 st.warning("Please select a target role on the home page first.")
 
+        with inner_tab2:
+            if st.session_state.valid_user_skills:
+                # 1. Prepare skills for the ML Model
+                skills_text = ", ".join(list(set(st.session_state.valid_user_skills)))
+                skills_vector = vectorizer.transform([skills_text])
+
+                # 2. Get Top Predicted Role from your RandomForest model
+                probabilities = model.predict_proba(skills_vector)
+                top_role_index = np.argmax(probabilities[0])
+                top_role = job_roles[top_role_index]
+
+                st.info(f"Top predicted role based on your profile: **{top_role}**{location_text}")
+
+                with st.spinner(f"Fetching jobs for {top_role}..."):
+                    jobs = fetch_jobs(top_role, location=job_loc)
+                    display_jobs(jobs[:5], st.session_state.get("original_skills", []))
+            else:
+                st.warning("Please enter more valid skills on the home page for a prediction.")
+
         with inner_tab3:
-            # Get the user's skills
             all_user_skills = st.session_state.get("original_skills", [])
-
             if all_user_skills:
-                # IMPROVEMENT: If there are many skills, take only the first 3 for the search query
-                # This prevents the search from becoming too narrow/strict
-                search_skills = all_user_skills[:3] if len(all_user_skills) > 3 else all_user_skills
-                query_skills = ", ".join(search_skills)
+                # Broader search: use top 3 skills only to avoid empty results
+                search_query = ", ".join(all_user_skills[:3])
 
-                st.info(f"Showing jobs matching your top skills: **{query_skills}** in **{job_loc}**")
+                st.info(f"Showing jobs matching skills: **{search_query}**{location_text}")
 
-                with st.spinner("Fetching best matches..."):
-                    # Pass the optimized query to the API
-                    jobs = fetch_jobs(query_skills, location=job_loc)
+                with st.spinner("Fetching matches..."):
+                    jobs = fetch_jobs(search_query, location=job_loc)
 
+                    # Fallback if query is too specific
                     if not jobs and len(all_user_skills) > 1:
-                        st.warning("No perfect matches found for those skills combined. Trying a broader search...")
-                        # Fallback: Just search for the very first (strongest) skill
                         jobs = fetch_jobs(all_user_skills[0], location=job_loc)
 
                     display_jobs(jobs[:5], all_user_skills)
