@@ -550,7 +550,7 @@ if st.session_state.get("analysis_done", False):
     st.sidebar.header(f"Welcome, {st.session_state.name or 'User'}!")
 
     # Define the list of options clearly
-    NAV_OPTIONS = ["📊 Analysis Report", "🔍 Find Jobs", "📝 Resume Points Builder", "🤖 AI Career Chat"]
+    NAV_OPTIONS = ["📊 Analysis Report", "🔍 Find Jobs", "📝 Resume Points Builder", "💻 AI Career Chat"]
     DEFAULT_PAGE = NAV_OPTIONS[0]  # Use the first element as the default
 
     current_page = st.session_state.get("page", DEFAULT_PAGE)
@@ -726,10 +726,6 @@ if st.session_state.get("analysis_done", False):
             else:
                 st.caption("Enter skills to see relevant jobs.")
 
-
-
-
-
     # --- Page 3: Resume Builder ---
     elif st.session_state.get("page") == "📝 Resume Points Builder":
         with st.spinner("Preparing AI Builder interface..."):
@@ -780,8 +776,8 @@ if st.session_state.get("analysis_done", False):
 
 
     # --- Page 4: AI Career Chat ---
-    elif st.session_state.get("page") == "🤖 AI Career Chat":
-        st.markdown("# 🤖 AI Career Chat")
+    elif st.session_state.get("page") == "💻 AI Career Chat":
+        st.markdown("# 💻 AI Career Chat")
 
         if "chat_messages" not in st.session_state:
             st.session_state.chat_messages = []
