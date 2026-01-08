@@ -501,7 +501,14 @@ if not st.session_state.get("analysis_done", False):
         st.error(f"Error displaying logo: {e}")
 
     with st.container():
-        st.markdown("👋 Welcome! Let's get started by analyzing your skills against your desired job role.")
+        st.markdown("---")
+        st.markdown("""
+        ### How SkillSpread works:
+        1. **Analyze:** We map your current skills against industry requirements.
+        2. **Discover:** Our AI predicts your best-fit roles and finds live job openings.
+        3. **Optimize:** Our Mentor helps you bridge gaps and build a winning resume.
+        """)
+        st.markdown("---")
         with st.form("input_form"):
             col1, col2 = st.columns(2)
             with col1:
