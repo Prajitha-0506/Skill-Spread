@@ -505,20 +505,46 @@ if not st.session_state.get("analysis_done", False):
         st.write("")
         st.write("")
 
-        # Using columns to create a clean horizontal layout
+        # Custom CSS for the cards
+        st.markdown("""
+            <style>
+            .feature-card {
+                background: rgba(255, 255, 255, 0.05);
+                border-radius: 15px;
+                padding: 20px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                height: 100%;
+                transition: transform 0.3s ease, border-color 0.3s ease;
+            }
+            .feature-card:hover {
+                transform: translateY(-5px);
+                border-color: #4A90E2;
+                background: rgba(255, 255, 255, 0.08);
+            }
+            </style>
+        """, unsafe_allow_html=True)
+
         col_a, col_b, col_c = st.columns(3)
 
         with col_a:
-            st.markdown("### 📊 Smart Analysis")
-            st.write("We map your current skills against industry standards to identify your exact career gaps.")
+            st.markdown("""<div class="feature-card">
+                <h3>📊 Smart Analysis</h3>
+                <p>Map your skills against industry standards to identify your exact career gaps.</p>
+            </div>""", unsafe_allow_html=True)
 
         with col_b:
-            st.markdown("### 🔍 Live Job Match")
-            st.write("Using ML-powered prediction, we find live job openings that actually fit your unique profile.")
+            st.markdown("""<div class="feature-card">
+                <h3>🔍 Live Job Match</h3>
+                <p>Using ML-powered prediction, we find live job openings that actually fit your profile.</p>
+            </div>""", unsafe_allow_html=True)
 
         with col_c:
-            st.markdown("### 💻 AI Mentorship")
-            st.write("Chat with an AI Career Coach to bridge skill gaps and build high-impact resume points.")
+            st.markdown("""<div class="feature-card">
+                <h3>🤖 AI Mentorship</h3>
+                <p>Chat with an AI Career Coach to bridge skill gaps and build high-impact resume points.</p>
+            </div>""", unsafe_allow_html=True)
+
+        st.markdown("<br><br>", unsafe_allow_html=True)
 
         st.write("")
         st.write("")
