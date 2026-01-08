@@ -243,7 +243,12 @@ def load_css():
 
     /* Final successful fix concept: High specificity and deep nesting */
     div[data-testid="stSidebar"] div[data-testid*="stBlock"] > div > div > div > p {
-        font-size: 1.25rem !important; 
+        font-size: 1.25rem !important;
+        /* Force Poppins for text, but allow System Emojis for the icons */
+        font-family: 'Poppins', "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif !important;
+        display: flex;
+        align-items: center;
+        gap: 10px;
     }
 
     """
