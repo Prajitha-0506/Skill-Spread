@@ -501,13 +501,24 @@ if not st.session_state.get("analysis_done", False):
         st.error(f"Error displaying logo: {e}")
 
     with st.container():
+        # --- UI: Professional Feature Intro ---
         st.markdown("---")
-        st.markdown("""
-        ### How SkillSpread works:
-        1. **Analyze:** We map your current skills against industry requirements.
-        2. **Discover:** Our AI predicts your best-fit roles and finds live job openings.
-        3. **Optimize:** Our Mentor helps you bridge gaps and build a winning resume.
-        """)
+
+        # Using columns to create a clean horizontal layout
+        col_a, col_b, col_c = st.columns(3)
+
+        with col_a:
+            st.markdown("### 📊 Smart Analysis")
+            st.write("We map your current skills against industry standards to identify your exact career gaps.")
+
+        with col_b:
+            st.markdown("### 🔍 Live Job Match")
+            st.write("Using ML-powered prediction, we find live job openings that actually fit your unique profile.")
+
+        with col_c:
+            st.markdown("### 🤖 AI Mentorship")
+            st.write("Chat with an AI Career Coach to bridge skill gaps and build high-impact resume points.")
+
         st.markdown("---")
         with st.form("input_form"):
             col1, col2 = st.columns(2)
